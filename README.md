@@ -108,6 +108,19 @@ npm run preview
 
 Os arquivos gerados ficam em `web/dist/`; podem ser servidos por qualquer servidor estático.
 
+## Git no GitHub
+
+O repositório local já tem `main` com commit inicial. O remote aponta para `https://github.com/bioblanks/color-embroidery.git` (ajuste o nome do repositório se for outro).
+
+1. No GitHub, crie um repositório **vazio** (sem README) na org ou utilizador **bioblanks** com o nome escolhido (ex.: `color-embroidery`).
+2. Na pasta do projeto:
+
+```bash
+git push -u origin main
+```
+
+Se o URL for diferente: `git remote set-url origin https://github.com/bioblanks/SEU-REPO.git`
+
 ## Limitações
 
 - **Cobertura**: o JSON precisa listar todas as cores Marathon Poly que você quer consultar; o scraping pontual só alimenta o catálogo quando a marca alvo é Marathon Poly e você agrega os CSVs.
