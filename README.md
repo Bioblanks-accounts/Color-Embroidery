@@ -110,16 +110,12 @@ Os arquivos gerados ficam em `web/dist/`; podem ser servidos por qualquer servid
 
 ## Git no GitHub
 
-O repositório local já tem `main` com commit inicial. O remote aponta para `https://github.com/bioblanks/color-embroidery.git` (ajuste o nome do repositório se for outro).
-
-1. No GitHub, crie um repositório **vazio** (sem README) na org ou utilizador **bioblanks** com o nome escolhido (ex.: `color-embroidery`).
-2. Na pasta do projeto:
+Repositório: [Bioblanks-accounts/Color-Embroidery](https://github.com/Bioblanks-accounts/Color-Embroidery).
 
 ```bash
+git remote -v   # origin → https://github.com/Bioblanks-accounts/Color-Embroidery.git
 git push -u origin main
 ```
-
-Se o URL for diferente: `git remote set-url origin https://github.com/bioblanks/SEU-REPO.git`
 
 ## Limitações
 
