@@ -1,0 +1,6 @@
+# Um código por linha. Linhas começando com # são ignoradas.
+# Substitua por sua lista completa (tabela oficial DMC, etc.).
+310
+666
+321
+498

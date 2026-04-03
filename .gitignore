@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+web/node_modules/
+web/dist/
+.DS_Store
+
+# Artefactos de scrape / checkpoints (regeneráveis)
+out/

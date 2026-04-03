@@ -1,0 +1,2 @@
+source_brand,source_color_code,source_rgb,target_brand,target_color_code,target_color_name,similarity_percent,target_rgb,target_hex,searched_rgb
+DMC,999,rgb(100, 100, 100),Marathon Poly,9999,Gray Test,95.0,"rgb(98, 98, 98)",#626262,"rgb(100, 100, 100)"
