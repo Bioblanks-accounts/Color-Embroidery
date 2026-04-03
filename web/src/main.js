@@ -1,22 +1,17 @@
 /**
- * App offline: encontra cores Marathon Poly mais próximas (HEX/picker) via ΔE CIEDE2000.
- * O slider define o mínimo de "Match score" (derivado de ΔE), no mesmo espírito do site:
- * "No colors with at least X% match" — sem linhas abaixo desse patamar.
+ * Offline app: closest Marathon Poly thread colors (HEX/picker) via CIEDE2000 ΔE.
+ * Slider sets minimum match score (derived from ΔE), same idea as "no matches below X%".
  */
 import { differenceCiede2000, formatRgb, parse } from "culori";
 import "./style.css";
 
 const BRAND_LABEL = "Marathon Poly";
-/** Top N matches (ordenados por menor ΔE = melhor correspondência). */
+/** Top N matches (lowest ΔE = best match). */
 const MAX_RESULTS = 3;
 
 /**
- * Match score ≈ referência NextEmbroidery (calibrado, não idêntico).
- *
- * Referência usada (culori ΔE2000): entrada rgb(240,138,138) vs linhas #fb858e (~97,12%
- * no site) e #e38782 (~96,48%). Regressão linear mínimos quadrados: score ≈ 100 − k·ΔE
- * com k ≈ 1,085. O site pode ordenar linhas de forma ligeiramente diferente (critério
- * próprio); aqui o score segue sempre o ΔE.
+ * Match score calibrated vs NextEmbroidery reference pairs (not identical to their %).
+ * Linear fit: score ≈ 100 − k·ΔE with k ≈ 1.0848 (culori ΔE2000).
  */
 const MATCH_SCORE_DE_SCALE = 1.0848;
 
@@ -29,10 +24,7 @@ function normalizeRgbString(s) {
   return String(s || "").replace(/\s+/g, "").toLowerCase();
 }
 
-/**
- * Se o catálogo tiver amostra do scrape com o mesmo searched_rgb que a cor atual,
- * usa similarity_percent da API; caso contrário ΔE calibrado.
- */
+/** If catalog has a scrape sample for the same searched_rgb, use API similarity; else calibrated ΔE. */
 function matchScoreFromCatalog(c, userParsed, de) {
   const userKey = normalizeRgbString(formatRgb(userParsed));
   const samples = c.site_similarity_samples;
@@ -65,11 +57,11 @@ function normalizeHex(raw) {
 
 async function loadCatalog() {
   const res = await fetch("/data/marathon_poly.json");
-  if (!res.ok) throw new Error(`Falha ao carregar catálogo: ${res.status}`);
+  if (!res.ok) throw new Error(`Failed to load catalog: ${res.status}`);
   const data = await res.json();
   const colors = Array.isArray(data) ? data : data.colors;
   if (!colors || !colors.length) {
-    throw new Error("Catálogo vazio ou formato inválido.");
+    throw new Error("Catalog is empty or invalid.");
   }
   const meta = data._meta || {};
   return { colors, meta };
@@ -116,21 +108,21 @@ function renderApp(root, state) {
           Thread Converter · offline
         </span>
         <h1>Color <em>Embroidery</em></h1>
-        <p class="subtitle">Encontra os fios <strong>${BRAND_LABEL}</strong> mais próximos da sua cor — sem internet.</p>
+        <p class="subtitle">Find the closest <strong>${BRAND_LABEL}</strong> threads to your color — works offline.</p>
       </header>
 
       ${
         error
           ? `<div class="banner error"><span class="banner-dot"></span>${escapeHtml(error)}</div>`
-          : `<div class="banner ok"><span class="banner-dot"></span>Catálogo carregado · pronto para uso</div>`
+          : `<div class="banner ok"><span class="banner-dot"></span>Catalog loaded · ready</div>`
       }
 
       <section class="panel">
 
         <!-- Big color picker -->
         <div class="color-section">
-          <p class="color-section-label">Selecionar cor</p>
-          <div class="color-preview-wrap" title="Clique para abrir o seletor de cor">
+          <p class="color-section-label">Pick a color</p>
+          <div class="color-preview-wrap" title="Click to open the color picker">
             <div class="color-preview-bg" id="color-preview-bg" style="background:${INITIAL_COLOR}"></div>
             <input type="color" id="picker" value="${INITIAL_COLOR}" aria-label="Color picker" />
             <span class="color-preview-label">
@@ -139,7 +131,7 @@ function renderApp(root, state) {
                 <path d="m7 9 5-7 5 7"/>
                 <path d="M12 2v13"/>
               </svg>
-              Escolher cor
+              Choose color
             </span>
           </div>
           <div class="hex-row">
@@ -153,11 +145,11 @@ function renderApp(root, state) {
         <!-- Accuracy slider -->
         <div class="field">
           <div class="field-row">
-            <span class="field-label">Correspondência mínima</span>
+            <span class="field-label">Minimum match</span>
             <span class="acc-badge"><span id="acc-val">90</span>%</span>
           </div>
           <input type="range" id="accuracy" min="90" max="100" step="1" value="90" />
-          <span class="hint">Reduza se não encontrar resultados. Valores menores mostram correspondências mais distantes.</span>
+          <span class="hint">Lower this if you get no results. Lower values include more distant matches.</span>
         </div>
 
         <!-- CTA -->
@@ -165,13 +157,13 @@ function renderApp(root, state) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
-          Buscar correspondências
+          Find matches
         </button>
       </section>
 
       <section class="panel" id="results-wrap" hidden>
         <div class="results-header">
-          <h2>Resultados</h2>
+          <h2>Results</h2>
         </div>
         <p class="source-line" id="source-line"></p>
         <div class="table-wrap">
@@ -184,7 +176,7 @@ function renderApp(root, state) {
                 <th>Brand</th>
                 <th>Color Name</th>
                 <th>Code</th>
-                <th title="API do site se houver amostra no catálogo para este RGB; senão ΔE calibrado">Match</th>
+                <th title="Site API % if catalog has a sample for this RGB; otherwise calibrated ΔE">Match</th>
                 <th>Swatches</th>
                 <th>HEX</th>
               </tr>
@@ -196,9 +188,9 @@ function renderApp(root, state) {
 
       <footer class="foot">
         <p>
-          Se o JSON tiver <code>site_similarity_samples</code> e a cor coincidir com <code>searched_rgb</code>,
-          o Match score usa o % da API (marcado *); caso contrário usa ΔE calibrado.
-          Catálogo: <code>public/data/marathon_poly.json</code>.
+          If the JSON includes <code>site_similarity_samples</code> and your color matches <code>searched_rgb</code>,
+          Match score uses the API percentage (marked *); otherwise calibrated ΔE.
+          Catalog: <code>public/data/marathon_poly.json</code>.
         </p>
       </footer>
     </div>
@@ -252,14 +244,14 @@ async function init() {
     const raw = hexInput.value.startsWith("#") ? hexInput.value : `#${hexInput.value}`;
     const h = normalizeHex(raw);
     if (h) {
-      hexInput.value = h.slice(1); // show without #
+      hexInput.value = h.slice(1);
       picker.value = h;
       updatePreview(h);
     }
   }
 
   function syncHexFromPicker() {
-    hexInput.value = picker.value.slice(1); // strip #
+    hexInput.value = picker.value.slice(1);
     updatePreview(picker.value);
   }
 
@@ -278,12 +270,12 @@ async function init() {
     const raw = hexInput.value.startsWith("#") ? hexInput.value : `#${hexInput.value}`;
     const h = normalizeHex(raw);
     if (!h) {
-      alert("HEX inválido. Use formato RRGGBB ou #RRGGBB.");
+      alert("Invalid HEX. Use RRGGBB or #RRGGBB.");
       return;
     }
     const userParsed = parse(h);
     if (!userParsed) {
-      alert("Não foi possível interpretar a cor.");
+      alert("Could not parse that color.");
       return;
     }
 
@@ -301,7 +293,7 @@ async function init() {
         <td>${escapeHtml(String(r.code))}</td>
         <td>
           <span class="score-badge${r.scoreSource === "site" ? " site" : ""}"
-                title="${escapeHtml(r.scoreSource === "site" ? "similarity_percent do export (API) — mesmo RGB pesquisado no scrape" : "derivado de Delta E (CIEDE2000) calibrado")}">
+                title="${escapeHtml(r.scoreSource === "site" ? "similarity from API export (same searched RGB as scrape)" : "Calibrated CIEDE2000 ΔE")}">
             ${r.accuracyPct}%${r.scoreSource === "site" ? " *" : ""}
           </span>
         </td>
@@ -318,7 +310,7 @@ async function init() {
       .join("");
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty">Nenhuma cor com pelo menos <strong>${escapeHtml(accuracy.value)}%</strong> de correspondência (Match score). Reduza a correspondência mínima no slider para ver sugestões mais distantes.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="empty">No thread at least <strong>${escapeHtml(accuracy.value)}%</strong> match score. Lower the minimum match slider to see more distant suggestions.</td></tr>`;
     }
   });
 
