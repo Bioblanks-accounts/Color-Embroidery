@@ -106,50 +106,86 @@ function matchColors(userColorParsed, catalogColors, accuracy) {
 
 function renderApp(root, state) {
   const { error } = state;
+  const INITIAL_COLOR = "#3a5dff";
 
   root.innerHTML = `
     <div class="shell">
       <header class="header">
-        <h1>Thread color matcher</h1>
-        <p class="subtitle">Marca alvo fixa: <strong>${BRAND_LABEL}</strong> · dados locais (JSON)</p>
+        <span class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          Thread Converter · offline
+        </span>
+        <h1>Color <em>Embroidery</em></h1>
+        <p class="subtitle">Encontra os fios <strong>${BRAND_LABEL}</strong> mais próximos da sua cor — sem internet.</p>
       </header>
 
       ${
         error
-          ? `<div class="banner error">${escapeHtml(error)}</div>`
-          : `<div class="banner ok">Catálogo carregado.</div>`
+          ? `<div class="banner error"><span class="banner-dot"></span>${escapeHtml(error)}</div>`
+          : `<div class="banner ok"><span class="banner-dot"></span>Catálogo carregado · pronto para uso</div>`
       }
 
       <section class="panel">
-        <label class="field">
-          <span>Cor (HEX)</span>
-          <div class="row">
-            <input type="color" id="picker" value="#3a5dff" />
-            <input type="text" id="hex" class="hex-input" placeholder="#3A5DFF" maxlength="7" value="#3a5dff" />
+
+        <!-- Big color picker -->
+        <div class="color-section">
+          <p class="color-section-label">Selecionar cor</p>
+          <div class="color-preview-wrap" title="Clique para abrir o seletor de cor">
+            <div class="color-preview-bg" id="color-preview-bg" style="background:${INITIAL_COLOR}"></div>
+            <input type="color" id="picker" value="${INITIAL_COLOR}" aria-label="Color picker" />
+            <span class="color-preview-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 13.5V20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6.5"/>
+                <path d="m7 9 5-7 5 7"/>
+                <path d="M12 2v13"/>
+              </svg>
+              Escolher cor
+            </span>
           </div>
-        </label>
+          <div class="hex-row">
+            <span class="hex-prefix">#</span>
+            <input type="text" id="hex" class="hex-input" placeholder="3A5DFF" maxlength="7" value="${INITIAL_COLOR.slice(1)}" />
+          </div>
+        </div>
 
-        <label class="field">
-          <span>Correspondência mínima <span class="acc-val" id="acc-val">90</span>%</span>
+        <div class="divider"></div>
+
+        <!-- Accuracy slider -->
+        <div class="field">
+          <div class="field-row">
+            <span class="field-label">Correspondência mínima</span>
+            <span class="acc-badge"><span id="acc-val">90</span>%</span>
+          </div>
           <input type="range" id="accuracy" min="90" max="100" step="1" value="90" />
-          <span class="hint">Só aparecem linhas com Match score ≥ este valor (como “pelo menos X%” no NextEmbroidery). Reduza se não houver resultados.</span>
-        </label>
+          <span class="hint">Reduza se não encontrar resultados. Valores menores mostram correspondências mais distantes.</span>
+        </div>
 
-        <button type="button" class="btn" id="run">Buscar correspondências</button>
+        <!-- CTA -->
+        <button type="button" class="btn" id="run">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          Buscar correspondências
+        </button>
       </section>
 
-      <section class="panel results" id="results-wrap" hidden>
-        <h2>Resultados</h2>
+      <section class="panel" id="results-wrap" hidden>
+        <div class="results-header">
+          <h2>Resultados</h2>
+        </div>
         <p class="source-line" id="source-line"></p>
         <div class="table-wrap">
           <table class="grid">
+            <colgroup>
+              <col /><col /><col /><col /><col /><col />
+            </colgroup>
             <thead>
               <tr>
-                <th>Thread Brand</th>
+                <th>Brand</th>
                 <th>Color Name</th>
-                <th>Color Code</th>
-                <th title="API do site se houver amostra no catálogo para este RGB; senão ΔE calibrado">Match score</th>
-                <th>Matched | Original</th>
+                <th>Code</th>
+                <th title="API do site se houver amostra no catálogo para este RGB; senão ΔE calibrado">Match</th>
+                <th>Swatches</th>
                 <th>HEX</th>
               </tr>
             </thead>
@@ -160,9 +196,9 @@ function renderApp(root, state) {
 
       <footer class="foot">
         <p>
-          Se o JSON tiver <code>site_similarity_samples</code> (vindo dos CSV do scrape) e a tua cor
-          coincidir com <code>searched_rgb</code>, o <strong>Match score</strong> usa o % da API; caso contrário usa ΔE calibrado.
-          Catálogo: <code>public/data/marathon_poly.json</code>. * = percentagem da API nos dados do scrape.
+          Se o JSON tiver <code>site_similarity_samples</code> e a cor coincidir com <code>searched_rgb</code>,
+          o Match score usa o % da API (marcado *); caso contrário usa ΔE calibrado.
+          Catálogo: <code>public/data/marathon_poly.json</code>.
         </p>
       </footer>
     </div>
@@ -193,6 +229,7 @@ async function init() {
 
   const picker = root.querySelector("#picker");
   const hexInput = root.querySelector("#hex");
+  const colorPreviewBg = root.querySelector("#color-preview-bg");
   const accuracy = root.querySelector("#accuracy");
   const accVal = root.querySelector("#acc-val");
   const runBtn = root.querySelector("#run");
@@ -206,28 +243,42 @@ async function init() {
     });
   }
 
+  function updatePreview(hex) {
+    if (colorPreviewBg) colorPreviewBg.style.background = hex;
+  }
+
   function syncPickerFromHex() {
-    const h = normalizeHex(hexInput.value);
+    // hex input has no "#" prefix — normalize accepts both
+    const raw = hexInput.value.startsWith("#") ? hexInput.value : `#${hexInput.value}`;
+    const h = normalizeHex(raw);
     if (h) {
-      hexInput.value = h;
+      hexInput.value = h.slice(1); // show without #
       picker.value = h;
+      updatePreview(h);
     }
   }
 
   function syncHexFromPicker() {
-    hexInput.value = picker.value;
+    hexInput.value = picker.value.slice(1); // strip #
+    updatePreview(picker.value);
   }
 
   picker?.addEventListener("input", syncHexFromPicker);
+  hexInput?.addEventListener("input", () => {
+    const raw = `#${hexInput.value}`;
+    const h = normalizeHex(raw);
+    if (h) { picker.value = h; updatePreview(h); }
+  });
   hexInput?.addEventListener("change", syncPickerFromHex);
   hexInput?.addEventListener("blur", syncPickerFromHex);
 
   runBtn?.addEventListener("click", () => {
     if (!catalog.length) return;
     syncPickerFromHex();
-    const h = normalizeHex(hexInput.value);
+    const raw = hexInput.value.startsWith("#") ? hexInput.value : `#${hexInput.value}`;
+    const h = normalizeHex(raw);
     if (!h) {
-      alert("HEX inválido. Use formato #RRGGBB.");
+      alert("HEX inválido. Use formato RRGGBB ou #RRGGBB.");
       return;
     }
     const userParsed = parse(h);
@@ -248,12 +299,19 @@ async function init() {
         <td>${escapeHtml(BRAND_LABEL)}</td>
         <td>${escapeHtml(r.name)}</td>
         <td>${escapeHtml(String(r.code))}</td>
-        <td title="${escapeHtml(r.scoreSource === "site" ? "similarity_percent do export (API) — mesmo RGB pesquisado no scrape" : "derivado de Delta E (CIEDE2000) calibrado")}">${r.accuracyPct}%${r.scoreSource === "site" ? " *" : ""}</td>
-        <td class="swatch-cell">
-          <span class="sw matched" style="background:${r.hex}" title="Matched"></span>
-          <span class="sw orig" style="background:${h}" title="Original"></span>
+        <td>
+          <span class="score-badge${r.scoreSource === "site" ? " site" : ""}"
+                title="${escapeHtml(r.scoreSource === "site" ? "similarity_percent do export (API) — mesmo RGB pesquisado no scrape" : "derivado de Delta E (CIEDE2000) calibrado")}">
+            ${r.accuracyPct}%${r.scoreSource === "site" ? " *" : ""}
+          </span>
         </td>
-        <td><code>${escapeHtml(r.hex)}</code></td>
+        <td>
+          <div class="swatch-pair">
+            <span class="sw" style="background:${r.hex}" title="Matched: ${r.hex}"></span>
+            <span class="sw" style="background:${h}" title="Original: ${h}"></span>
+          </div>
+        </td>
+        <td><span class="hex-code">${escapeHtml(r.hex)}</span></td>
       </tr>
     `
       )
