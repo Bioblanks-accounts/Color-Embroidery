@@ -105,7 +105,7 @@ function renderApp(root, state) {
       <header class="header">
         <span class="eyebrow">
           <span class="eyebrow-dot"></span>
-          Thread Converter · offline
+          BioBlanks · Thread Tools
         </span>
         <h1>Color <em>Embroidery</em></h1>
         <p class="subtitle">Find the closest <strong>${BRAND_LABEL}</strong> threads to your color — works offline.</p>
@@ -154,10 +154,10 @@ function renderApp(root, state) {
 
         <!-- CTA -->
         <button type="button" class="btn" id="run">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          Find Matches
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
-          Find matches
         </button>
       </section>
 
