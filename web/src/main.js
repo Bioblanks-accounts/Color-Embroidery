@@ -170,19 +170,6 @@ function renderApp(root, state) {
           <span class="hint">Lower this if you get no results. Lower values include more distant matches.</span>
         </div>
 
-        <!-- Algorithm selector -->
-        <div class="field">
-          <div class="field-row">
-            <span class="field-label">Distance algorithm</span>
-          </div>
-          <select id="algorithm" class="algo-select">
-            <option value="euclidean" selected>Euclidean RGB (recommended)</option>
-            <option value="ciede2000">CIEDE2000</option>
-            <option value="cie76">Delta E 1976</option>
-          </select>
-          <span class="hint">CIEDE2000 is most perceptually accurate. Try others to calibrate against reference sites.</span>
-        </div>
-
         <!-- CTA -->
         <button type="button" class="btn" id="run">
           Find Matches
@@ -310,13 +297,10 @@ async function init() {
       return;
     }
 
-    const algoSelect = root.querySelector("#algorithm");
-    const algo = algoSelect ? algoSelect.value : "ciede2000";
-    const algoLabel = ALGORITHMS[algo] ? ALGORITHMS[algo].label : "CIEDE2000";
-    const rows = matchColors(userParsed, catalog, accuracy.value, algo);
+    const rows = matchColors(userParsed, catalog, accuracy.value);
     resultsWrap.hidden = false;
     const rgbStr = formatRgb(userParsed);
-    sourceLine.innerHTML = `Converted from: <strong>Color Picker</strong> · Color Code: <strong>N/A</strong> · RGB: <strong>${rgbStr}</strong> · Algorithm: <strong>${escapeHtml(algoLabel)}</strong>`;
+    sourceLine.innerHTML = `Converted from: <strong>Color Picker</strong> · Color Code: <strong>N/A</strong> · RGB: <strong>${rgbStr}</strong>`;
 
     tbody.innerHTML = rows
       .map(
