@@ -2,7 +2,7 @@
  * Offline app: closest Marathon Poly thread colors (HEX/picker) via CIEDE2000 ΔE.
  * Slider sets minimum match score (derived from ΔE), same idea as "no matches below X%".
  */
-import { differenceCiede2000, formatRgb, parse } from "culori";
+import { differenceCiede2000, differenceCie76, formatRgb, parse } from "culori";
 import "./style.css";
 
 const BRAND_LABEL = "Marathon Poly";
@@ -10,13 +10,29 @@ const BRAND_LABEL = "Marathon Poly";
 const MAX_RESULTS = 3;
 
 /**
- * Match score calibrated vs NextEmbroidery reference pairs (not identical to their %).
- * Linear fit: score ≈ 100 − k·ΔE with k ≈ 1.0848 (culori ΔE2000).
+ * Euclidean RGB distance in 0-255 scale.
+ * culori's differenceEuclidean('rgb') uses 0-1 range; this gives the familiar 0-441 scale.
  */
-const MATCH_SCORE_DE_SCALE = 1.0848;
+function euclideanRgb255(std, smp) {
+  const dr = (std.r - smp.r) * 255;
+  const dg = (std.g - smp.g) * 255;
+  const db = (std.b - smp.b) * 255;
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
 
-function displayAccuracyPercent(deltaE) {
-  const p = 100 - Math.min(100, deltaE * MATCH_SCORE_DE_SCALE);
+/**
+ * Algorithm registry: each entry has a display label, distance function factory,
+ * and a scale factor to convert distance → percentage (score ≈ 100 − scale·distance).
+ * CIEDE2000 scale calibrated vs NextEmbroidery reference pairs.
+ */
+const ALGORITHMS = {
+  ciede2000:  { label: "CIEDE2000",       fn: () => differenceCiede2000(), scale: 1.0848 },
+  cie76:      { label: "Delta E 1976",    fn: () => differenceCie76(),     scale: 0.8843 },
+  euclidean:  { label: "Euclidean RGB",   fn: euclideanRgb255,             scale: 0.2264 },
+};
+
+function displayAccuracyPercent(distance, scale) {
+  const p = 100 - Math.min(100, distance * scale);
   return Math.round(p * 100) / 100;
 }
 
@@ -24,8 +40,8 @@ function normalizeRgbString(s) {
   return String(s || "").replace(/\s+/g, "").toLowerCase();
 }
 
-/** If catalog has a scrape sample for the same searched_rgb, use API similarity; else calibrated ΔE. */
-function matchScoreFromCatalog(c, userParsed, de) {
+/** If catalog has a scrape sample for the same searched_rgb, use API similarity; else calibrated distance. */
+function matchScoreFromCatalog(c, userParsed, distance, scale) {
   const userKey = normalizeRgbString(formatRgb(userParsed));
   const samples = c.site_similarity_samples;
   if (Array.isArray(samples)) {
@@ -38,7 +54,7 @@ function matchScoreFromCatalog(c, userParsed, de) {
       }
     }
   }
-  return { pct: displayAccuracyPercent(de), source: "deltaE" };
+  return { pct: displayAccuracyPercent(distance, scale), source: "deltaE" };
 }
 
 function normalizeHex(raw) {
@@ -67,26 +83,28 @@ async function loadCatalog() {
   return { colors, meta };
 }
 
-function matchColors(userColorParsed, catalogColors, accuracy) {
-  const deltaE = differenceCiede2000();
-  const minScore = Math.min(100, Math.max(90, Number(accuracy)));
+function matchColors(userColorParsed, catalogColors, accuracy, algorithm = "euclidean") {
+  const algo = ALGORITHMS[algorithm] || ALGORITHMS.ciede2000;
+  const distFn = typeof algo.fn === "function" && algo.fn.length >= 2 ? algo.fn : algo.fn();
+  const minScore = Math.min(100, Math.max(0, Number(accuracy)));
   const rows = [];
 
   for (const c of catalogColors) {
     const thread = parse(c.hex || `rgb(${c.r}, ${c.g}, ${c.b})`);
     if (!thread) continue;
-    const de = deltaE(userColorParsed, thread);
+    const dist = distFn(userColorParsed, thread);
     const { pct: accuracyPct, source: scoreSource } = matchScoreFromCatalog(
       c,
       userColorParsed,
-      de
+      dist,
+      algo.scale
     );
     if (accuracyPct < minScore) continue;
     rows.push({
       code: c.code,
       name: c.name || "—",
       hex: c.hex || `#${c.r.toString(16).padStart(2, "0")}${c.g.toString(16).padStart(2, "0")}${c.b.toString(16).padStart(2, "0")}`,
-      deltaE: de,
+      deltaE: dist,
       accuracyPct,
       scoreSource,
     });
@@ -150,6 +168,19 @@ function renderApp(root, state) {
           </div>
           <input type="range" id="accuracy" min="90" max="100" step="1" value="90" />
           <span class="hint">Lower this if you get no results. Lower values include more distant matches.</span>
+        </div>
+
+        <!-- Algorithm selector -->
+        <div class="field">
+          <div class="field-row">
+            <span class="field-label">Distance algorithm</span>
+          </div>
+          <select id="algorithm" class="algo-select">
+            <option value="euclidean" selected>Euclidean RGB (recommended)</option>
+            <option value="ciede2000">CIEDE2000</option>
+            <option value="cie76">Delta E 1976</option>
+          </select>
+          <span class="hint">CIEDE2000 is most perceptually accurate. Try others to calibrate against reference sites.</span>
         </div>
 
         <!-- CTA -->
@@ -279,10 +310,13 @@ async function init() {
       return;
     }
 
-    const rows = matchColors(userParsed, catalog, accuracy.value);
+    const algoSelect = root.querySelector("#algorithm");
+    const algo = algoSelect ? algoSelect.value : "ciede2000";
+    const algoLabel = ALGORITHMS[algo] ? ALGORITHMS[algo].label : "CIEDE2000";
+    const rows = matchColors(userParsed, catalog, accuracy.value, algo);
     resultsWrap.hidden = false;
     const rgbStr = formatRgb(userParsed);
-    sourceLine.innerHTML = `Converted from: <strong>Color Picker</strong> · Color Code: <strong>N/A</strong> · RGB: <strong>${rgbStr}</strong>`;
+    sourceLine.innerHTML = `Converted from: <strong>Color Picker</strong> · Color Code: <strong>N/A</strong> · RGB: <strong>${rgbStr}</strong> · Algorithm: <strong>${escapeHtml(algoLabel)}</strong>`;
 
     tbody.innerHTML = rows
       .map(

@@ -428,6 +428,36 @@ input[type="range"]::-moz-range-thumb {
   line-height: 1.5;
 }
 
+/* ── Algorithm select dropdown ─────────────────────── */
+.algo-select {
+  width: 100%;
+  padding: 0.625rem var(--s3);
+  font-family: var(--font);
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-sm);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  transition: border-color 180ms, box-shadow 180ms;
+}
+
+.algo-select:hover {
+  border-color: var(--g-300);
+}
+
+.algo-select:focus {
+  border-color: var(--g-350);
+  box-shadow: 0 0 0 3px rgba(116, 240, 129, 0.15);
+}
+
 /* ── Button — BioBlanks solid pill CTA ──────────── */
 .btn {
   display: flex;
