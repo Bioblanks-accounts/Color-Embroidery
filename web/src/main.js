@@ -204,24 +204,7 @@ function renderApp(root, state) {
           <h2>Results</h2>
         </div>
         <p class="source-line" id="source-line"></p>
-        <div class="table-wrap">
-          <table class="grid">
-            <colgroup>
-              <col /><col /><col /><col /><col /><col />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Brand</th>
-                <th>Color Name</th>
-                <th>Code</th>
-                <th title="Site API % if catalog has a sample for this RGB; otherwise calibrated ΔE">Match</th>
-                <th>Swatches</th>
-                <th>HEX</th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
+        <div class="thread-cards" id="tbody"></div>
       </section>
 
     </div>
@@ -387,33 +370,41 @@ async function init() {
     const rgbStr = formatRgb(userParsed);
     sourceLine.innerHTML = `Converted from: <strong>Color Picker</strong> · Color Code: <strong>N/A</strong> · RGB: <strong>${rgbStr}</strong>`;
 
+    const RANKS = ["#1", "#2", "#3"];
     tbody.innerHTML = rows
       .map(
-        (r) => `
-      <tr>
-        <td>${escapeHtml(BRAND_LABEL)}</td>
-        <td>${escapeHtml(r.name)}</td>
-        <td>${escapeHtml(String(r.code))}</td>
-        <td>
-          <span class="score-badge${r.scoreSource === "site" ? " site" : ""}"
-                title="${escapeHtml(r.scoreSource === "site" ? "similarity from API export (same searched RGB as scrape)" : "Calibrated CIEDE2000 ΔE")}">
-            ${r.accuracyPct}%${r.scoreSource === "site" ? " *" : ""}
-          </span>
-        </td>
-        <td>
-          <div class="swatch-pair">
-            <span class="sw" style="background:${r.hex}" title="Matched: ${r.hex}"></span>
-            <span class="sw" style="background:${h}" title="Original: ${h}"></span>
+        (r, i) => `
+      <div class="thread-card">
+        <div class="card-swatch" style="background:${r.hex}">
+          <span class="card-rank">${RANKS[i] || `#${i + 1}`}</span>
+        </div>
+        <div class="card-content">
+          <div class="card-top">
+            <p class="card-name">${escapeHtml(r.name)}</p>
+            <span class="score-badge${r.scoreSource === "site" ? " site" : ""}"
+                  title="${escapeHtml(r.scoreSource === "site" ? "Similarity from site API (same searched RGB)" : "Calibrated distance score")}">
+              ${r.accuracyPct}%
+            </span>
           </div>
-        </td>
-        <td><span class="hex-code">${escapeHtml(r.hex)}</span></td>
-      </tr>
+          <div class="card-meta">
+            <span>${escapeHtml(BRAND_LABEL)}</span>
+            <span class="card-dot"></span>
+            <span class="card-code">${escapeHtml(String(r.code))}</span>
+          </div>
+          <div class="card-compare">
+            <span class="sw-sm" style="background:${r.hex}" title="Thread: ${r.hex}"></span>
+            <span class="sw-vs">vs</span>
+            <span class="sw-sm" style="background:${h}" title="Your color: ${h}"></span>
+            <span class="hex-code">${escapeHtml(r.hex)}</span>
+          </div>
+        </div>
+      </div>
     `
       )
       .join("");
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty">No thread at least <strong>${escapeHtml(accuracy.value)}%</strong> match score. Lower the minimum match slider to see more distant suggestions.</td></tr>`;
+      tbody.innerHTML = `<div class="empty-state">No thread at least <strong>${escapeHtml(accuracy.value)}%</strong> match. Lower the minimum match slider to include more distant suggestions.</div>`;
     }
   });
 
