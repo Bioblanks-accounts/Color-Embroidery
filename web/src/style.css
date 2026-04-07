@@ -4,6 +4,22 @@
    Orbs provide the color that panels blur against.
 ───────────────────────────────────────────────────── */
 
+/* ── Aeonik font-face ───────────────────────────────── */
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-Thin.woff2") format("woff2"); font-weight: 100; font-style: normal; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-ThinItalic.woff2") format("woff2"); font-weight: 100; font-style: italic; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-Air.woff2") format("woff2"); font-weight: 150; font-style: normal; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-AirItalic.woff2") format("woff2"); font-weight: 150; font-style: italic; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-Light.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-LightItalic.woff2") format("woff2"); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-RegularItalic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-MediumItalic.woff2") format("woff2"); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-BoldItalic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-Black.woff2") format("woff2"); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Aeonik"; src: url("/fonts/Aeonik-BlackItalic.woff2") format("woff2"); font-weight: 900; font-style: italic; font-display: swap; }
+
 /* ── Tokens ────────────────────────────────────────── */
 :root {
   /* Green scale */
@@ -53,8 +69,9 @@
   --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
 
   /* Type */
-  --font:  "DM Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
-  --mono:  ui-monospace, "SF Mono", "Cascadia Code", monospace;
+  --font:         "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-heading: "Aeonik", "SF Pro Display", -apple-system, system-ui, sans-serif;
+  --mono:         ui-monospace, "SF Mono", "Cascadia Code", monospace;
 
   /* Shape */
   --r-sm:   8px;
@@ -156,6 +173,7 @@ body {
 }
 
 .header h1 {
+  font-family: var(--font-heading);
   font-size: clamp(2rem, 6vw, 2.875rem);
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -539,6 +557,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .results-header h2 {
+  font-family: var(--font-heading);
   font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.02em;

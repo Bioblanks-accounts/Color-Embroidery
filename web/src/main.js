@@ -224,13 +224,6 @@ function renderApp(root, state) {
         </div>
       </section>
 
-      <footer class="foot">
-        <p>
-          If the JSON includes <code>site_similarity_samples</code> and your color matches <code>searched_rgb</code>,
-          Match score uses the API percentage (marked *); otherwise calibrated ΔE.
-          Catalog: <code>public/data/marathon_poly.json</code>.
-        </p>
-      </footer>
     </div>
   `;
 }
