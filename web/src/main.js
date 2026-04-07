@@ -8,7 +8,7 @@ import "./style.css";
 
 const BRAND_LABEL = "Marathon Poly";
 /** Top N matches (lowest ΔE = best match). */
-const MAX_RESULTS = 3;
+const MAX_RESULTS = 5;
 
 /**
  * Euclidean RGB distance in 0-255 scale.
@@ -370,7 +370,7 @@ async function init() {
     const rgbStr = formatRgb(userParsed);
     sourceLine.innerHTML = `Converted from: <strong>Color Picker</strong> · Color Code: <strong>N/A</strong> · RGB: <strong>${rgbStr}</strong>`;
 
-    const RANKS = ["#1", "#2", "#3"];
+    const RANKS = ["#1", "#2", "#3", "#4", "#5"];
     tbody.innerHTML = rows
       .map(
         (r, i) => `
