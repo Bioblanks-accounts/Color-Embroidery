@@ -3,6 +3,7 @@
  * Slider sets minimum match score (derived from ΔE), same idea as "no matches below X%".
  */
 import { differenceCiede2000, differenceCie76, formatRgb, parse } from "culori";
+import gsap from "gsap";
 import "./style.css";
 
 const BRAND_LABEL = "Marathon Poly";
@@ -301,7 +302,7 @@ async function init() {
   hexInput?.addEventListener("change", syncPickerFromHex);
   hexInput?.addEventListener("blur", syncPickerFromHex);
 
-  /* ── Segmented toggle ─────────────────────────── */
+  /* ── Segmented toggle (GSAP) ────────────────────── */
   const segBtns = root.querySelectorAll(".seg-btn");
   const segSlider = root.querySelector("#seg-slider");
   const algoHint = root.querySelector("#algo-hint");
@@ -310,26 +311,65 @@ async function init() {
     ciede2000: "Uses human color perception (advanced).",
   };
 
-  function moveSlider(btn) {
-    if (!segSlider || !btn) return;
-    segSlider.style.width = `${btn.offsetWidth}px`;
-    segSlider.style.transform = `translateX(${btn.offsetLeft - btn.parentElement.offsetLeft - 3}px)`;
+  // Index: 0 = left (euclidean), 1 = right (ciede2000)
+  let activeIdx = 0;
+
+  function moveSlider(idx, animate = true) {
+    if (!segSlider) return;
+    const xPct = idx * 100;
+    if (animate) {
+      gsap.to(segSlider, {
+        xPercent: xPct,
+        duration: 0.35,
+        ease: "back.out(1.4)",
+      });
+    } else {
+      gsap.set(segSlider, { xPercent: xPct });
+    }
   }
 
-  segBtns.forEach((btn) => {
-    if (btn.classList.contains("active")) moveSlider(btn);
-    btn.addEventListener("click", () => {
-      segBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      moveSlider(btn);
-      if (algoHint) algoHint.textContent = HINTS[btn.dataset.algo] || "";
-    });
-  });
+  // Init slider position (no animation)
+  moveSlider(activeIdx, false);
 
-  // Re-position slider on window resize
-  window.addEventListener("resize", () => {
-    const active = root.querySelector(".seg-btn.active");
-    if (active) moveSlider(active);
+  segBtns.forEach((btn, i) => {
+    btn.addEventListener("click", () => {
+      if (i === activeIdx) return;
+      const prevBtn = segBtns[activeIdx];
+      activeIdx = i;
+
+      // Swap active class
+      prevBtn.classList.remove("active");
+      btn.classList.add("active");
+
+      // Animate slider
+      moveSlider(i);
+
+      // Animate text & icon of new active button
+      gsap.fromTo(btn, { scale: 0.96 }, {
+        scale: 1,
+        duration: 0.3,
+        ease: "back.out(2)",
+      });
+
+      // Fade hint text
+      if (algoHint) {
+        gsap.to(algoHint, {
+          autoAlpha: 0,
+          y: -4,
+          duration: 0.15,
+          ease: "power2.in",
+          onComplete: () => {
+            algoHint.textContent = HINTS[btn.dataset.algo] || "";
+            gsap.to(algoHint, {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.25,
+              ease: "power2.out",
+            });
+          },
+        });
+      }
+    });
   });
 
   runBtn?.addEventListener("click", () => {
