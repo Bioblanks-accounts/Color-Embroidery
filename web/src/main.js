@@ -170,6 +170,25 @@ function renderApp(root, state) {
           <span class="hint">Lower this if you get no results. Lower values include more distant matches.</span>
         </div>
 
+        <!-- Match mode toggle -->
+        <div class="field">
+          <div class="field-row">
+            <span class="field-label">Match mode</span>
+          </div>
+          <div class="seg-toggle" id="seg-toggle">
+            <span class="seg-slider" id="seg-slider"></span>
+            <button type="button" class="seg-btn active" data-algo="euclidean" id="seg-euclidean">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+              Standard
+            </button>
+            <button type="button" class="seg-btn" data-algo="ciede2000" id="seg-ciede">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              Perceptual
+            </button>
+          </div>
+          <span class="hint" id="algo-hint">Matches the reference site results.</span>
+        </div>
+
         <!-- CTA -->
         <button type="button" class="btn" id="run">
           Find Matches
@@ -282,6 +301,37 @@ async function init() {
   hexInput?.addEventListener("change", syncPickerFromHex);
   hexInput?.addEventListener("blur", syncPickerFromHex);
 
+  /* ── Segmented toggle ─────────────────────────── */
+  const segBtns = root.querySelectorAll(".seg-btn");
+  const segSlider = root.querySelector("#seg-slider");
+  const algoHint = root.querySelector("#algo-hint");
+  const HINTS = {
+    euclidean: "Matches the reference site results.",
+    ciede2000: "Uses human color perception (advanced).",
+  };
+
+  function moveSlider(btn) {
+    if (!segSlider || !btn) return;
+    segSlider.style.width = `${btn.offsetWidth}px`;
+    segSlider.style.transform = `translateX(${btn.offsetLeft - btn.parentElement.offsetLeft - 3}px)`;
+  }
+
+  segBtns.forEach((btn) => {
+    if (btn.classList.contains("active")) moveSlider(btn);
+    btn.addEventListener("click", () => {
+      segBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      moveSlider(btn);
+      if (algoHint) algoHint.textContent = HINTS[btn.dataset.algo] || "";
+    });
+  });
+
+  // Re-position slider on window resize
+  window.addEventListener("resize", () => {
+    const active = root.querySelector(".seg-btn.active");
+    if (active) moveSlider(active);
+  });
+
   runBtn?.addEventListener("click", () => {
     if (!catalog.length) return;
     syncPickerFromHex();
@@ -297,7 +347,9 @@ async function init() {
       return;
     }
 
-    const rows = matchColors(userParsed, catalog, accuracy.value);
+    const activeBtn = root.querySelector(".seg-btn.active");
+    const algo = activeBtn ? activeBtn.dataset.algo : "euclidean";
+    const rows = matchColors(userParsed, catalog, accuracy.value, algo);
     resultsWrap.hidden = false;
     const rgbStr = formatRgb(userParsed);
     sourceLine.innerHTML = `Converted from: <strong>Color Picker</strong> · Color Code: <strong>N/A</strong> · RGB: <strong>${rgbStr}</strong>`;
