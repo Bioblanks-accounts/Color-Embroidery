@@ -320,8 +320,8 @@ async function init() {
     if (animate) {
       gsap.to(segSlider, {
         xPercent: xPct,
-        duration: 0.35,
-        ease: "back.out(1.4)",
+        duration: 0.4,
+        ease: "power2.inOut",
       });
     } else {
       gsap.set(segSlider, { xPercent: xPct });
@@ -344,11 +344,11 @@ async function init() {
       // Animate slider
       moveSlider(i);
 
-      // Animate text & icon of new active button
-      gsap.fromTo(btn, { scale: 0.96 }, {
+      // Subtle settle on active button
+      gsap.fromTo(btn, { scale: 0.97 }, {
         scale: 1,
         duration: 0.3,
-        ease: "back.out(2)",
+        ease: "power2.out",
       });
 
       // Fade hint text
