@@ -2,12 +2,13 @@
   "_meta": {
     "brand": "Marathon Poly",
     "count": 301,
-    "source": "merged CSV +/or JSON (Marathon Poly)"
+    "source": "merged CSV +/or JSON (Marathon Poly)",
+    "missing_names_filled": 0
   },
   "colors": [
     {
       "code": "2005",
-      "name": "",
+      "name": "Yellow",
       "hex": "#fae610",
       "r": 250,
       "g": 230,
@@ -169,7 +170,7 @@
         },
         {
           "searched_rgb": "rgb(225, 146, 85)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(249, 90, 97)",
@@ -751,7 +752,7 @@
     },
     {
       "code": "2015",
-      "name": "",
+      "name": "Lime Green",
       "hex": "#7fbb00",
       "r": 127,
       "g": 187,
@@ -831,7 +832,7 @@
     },
     {
       "code": "2018",
-      "name": "",
+      "name": "Bright Yellow",
       "hex": "#f9e715",
       "r": 249,
       "g": 231,
@@ -839,7 +840,7 @@
     },
     {
       "code": "2019",
-      "name": "",
+      "name": "Golden Yellow",
       "hex": "#f9df16",
       "r": 249,
       "g": 223,
@@ -847,7 +848,7 @@
     },
     {
       "code": "2020",
-      "name": "",
+      "name": "Canary Yellow",
       "hex": "#fad716",
       "r": 250,
       "g": 215,
@@ -911,7 +912,7 @@
         },
         {
           "searched_rgb": "rgb(246, 141, 57)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(255, 164, 73)",
@@ -1023,7 +1024,7 @@
     },
     {
       "code": "2025",
-      "name": "",
+      "name": "Dark Gold",
       "hex": "#c0920c",
       "r": 192,
       "g": 146,
@@ -1181,7 +1182,7 @@
     },
     {
       "code": "2029",
-      "name": "",
+      "name": "Amber",
       "hex": "#cc7a02",
       "r": 204,
       "g": 122,
@@ -1363,7 +1364,7 @@
         },
         {
           "searched_rgb": "rgb(206, 213, 176)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(225, 224, 216)",
@@ -1785,7 +1786,7 @@
         },
         {
           "searched_rgb": "rgb(255, 199, 196)",
-          "similarity": 94.0
+          "similarity": 94
         }
       ]
     },
@@ -2913,7 +2914,7 @@
       "site_similarity_samples": [
         {
           "searched_rgb": "rgb(255, 91, 0)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(206, 43, 0)",
@@ -3211,7 +3212,7 @@
         },
         {
           "searched_rgb": "rgb(190, 190, 185)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(202, 202, 202)",
@@ -3433,7 +3434,7 @@
     },
     {
       "code": "2066",
-      "name": "",
+      "name": "Cornflower Blue",
       "hex": "#3a75c4",
       "r": 58,
       "g": 117,
@@ -3441,7 +3442,7 @@
     },
     {
       "code": "2067",
-      "name": "",
+      "name": "Dark Blue",
       "hex": "#0055a0",
       "r": 0,
       "g": 85,
@@ -3449,7 +3450,7 @@
     },
     {
       "code": "2068",
-      "name": "",
+      "name": "Indigo",
       "hex": "#2f348e",
       "r": 47,
       "g": 52,
@@ -3457,7 +3458,7 @@
     },
     {
       "code": "2069",
-      "name": "",
+      "name": "Navy",
       "hex": "#003893",
       "r": 0,
       "g": 56,
@@ -3793,7 +3794,7 @@
         },
         {
           "searched_rgb": "rgb(245, 240, 219)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(243, 206, 225)",
@@ -3825,7 +3826,7 @@
         },
         {
           "searched_rgb": "rgb(246, 234, 219)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(251, 227, 209)",
@@ -3975,7 +3976,7 @@
         },
         {
           "searched_rgb": "rgb(202, 202, 202)",
-          "similarity": 95.0
+          "similarity": 95
         },
         {
           "searched_rgb": "rgb(194, 209, 207)",
@@ -4211,7 +4212,7 @@
       "site_similarity_samples": [
         {
           "searched_rgb": "rgb(61, 0, 103)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(109, 18, 97)",
@@ -4225,7 +4226,7 @@
     },
     {
       "code": "2084",
-      "name": "",
+      "name": "Purple",
       "hex": "#5a138e",
       "r": 90,
       "g": 19,
@@ -4389,7 +4390,7 @@
         },
         {
           "searched_rgb": "rgb(224, 224, 215)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(195, 206, 183)",
@@ -4487,7 +4488,7 @@
       "site_similarity_samples": [
         {
           "searched_rgb": "rgb(145, 180, 197)",
-          "similarity": 90.0
+          "similarity": 90
         },
         {
           "searched_rgb": "rgb(175, 195, 205)",
@@ -4509,7 +4510,7 @@
     },
     {
       "code": "2091",
-      "name": "",
+      "name": "Light Teal",
       "hex": "#71cfe3",
       "r": 113,
       "g": 207,
@@ -4517,7 +4518,7 @@
     },
     {
       "code": "2092",
-      "name": "",
+      "name": "Cyan",
       "hex": "#2ac5da",
       "r": 42,
       "g": 197,
@@ -4525,7 +4526,7 @@
     },
     {
       "code": "2093",
-      "name": "",
+      "name": "Teal Blue",
       "hex": "#0098b4",
       "r": 0,
       "g": 152,
@@ -4609,7 +4610,7 @@
         },
         {
           "searched_rgb": "rgb(145, 180, 197)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(102, 148, 154)",
@@ -4839,7 +4840,7 @@
         },
         {
           "searched_rgb": "rgb(236, 207, 225)",
-          "similarity": 90.0
+          "similarity": 90
         },
         {
           "searched_rgb": "rgb(243, 250, 209)",
@@ -5017,7 +5018,7 @@
     },
     {
       "code": "2100",
-      "name": "",
+      "name": "Citron",
       "hex": "#bbda0b",
       "r": 187,
       "g": 218,
@@ -5255,7 +5256,7 @@
       "site_similarity_samples": [
         {
           "searched_rgb": "rgb(79, 108, 69)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(79, 121, 66)",
@@ -5513,7 +5514,7 @@
         },
         {
           "searched_rgb": "rgb(84, 56, 23)",
-          "similarity": 96.0
+          "similarity": 96
         },
         {
           "searched_rgb": "rgb(85, 73, 0)",
@@ -5547,7 +5548,7 @@
         },
         {
           "searched_rgb": "rgb(0, 96, 47)",
-          "similarity": 90.0
+          "similarity": 90
         },
         {
           "searched_rgb": "rgb(59, 96, 76)",
@@ -5617,7 +5618,7 @@
         },
         {
           "searched_rgb": "rgb(255, 255, 190)",
-          "similarity": 90.0
+          "similarity": 90
         },
         {
           "searched_rgb": "rgb(255, 207, 214)",
@@ -5677,7 +5678,7 @@
         },
         {
           "searched_rgb": "rgb(248, 247, 221)",
-          "similarity": 94.0
+          "similarity": 94
         },
         {
           "searched_rgb": "rgb(255, 240, 197)",
@@ -6351,7 +6352,7 @@
         },
         {
           "searched_rgb": "rgb(190, 193, 205)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(244, 233, 202)",
@@ -6379,7 +6380,7 @@
         },
         {
           "searched_rgb": "rgb(255, 204, 208)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(208, 224, 210)",
@@ -6727,7 +6728,7 @@
         },
         {
           "searched_rgb": "rgb(255, 199, 176)",
-          "similarity": 94.0
+          "similarity": 94
         },
         {
           "searched_rgb": "rgb(255, 190, 164)",
@@ -6933,7 +6934,7 @@
         },
         {
           "searched_rgb": "rgb(242, 209, 142)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(219, 194, 164)",
@@ -7119,7 +7120,7 @@
         },
         {
           "searched_rgb": "rgb(194, 209, 206)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(206, 175, 144)",
@@ -7909,7 +7910,7 @@
         },
         {
           "searched_rgb": "rgb(139, 109, 115)",
-          "similarity": 93.0
+          "similarity": 93
         },
         {
           "searched_rgb": "rgb(140, 117, 109)",
@@ -7967,7 +7968,7 @@
         },
         {
           "searched_rgb": "rgb(69, 69, 49)",
-          "similarity": 94.0
+          "similarity": 94
         },
         {
           "searched_rgb": "rgb(73, 86, 55)",
@@ -8511,7 +8512,7 @@
         },
         {
           "searched_rgb": "rgb(235, 235, 231)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(230, 236, 232)",
@@ -8799,7 +8800,7 @@
         },
         {
           "searched_rgb": "rgb(255, 207, 214)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(235, 207, 185)",
@@ -9637,11 +9638,11 @@
         },
         {
           "searched_rgb": "rgb(182, 186, 194)",
-          "similarity": 98.0
+          "similarity": 98
         },
         {
           "searched_rgb": "rgb(208, 195, 164)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(172, 172, 170)",
@@ -9691,7 +9692,7 @@
         },
         {
           "searched_rgb": "rgb(145, 180, 197)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(179, 151, 143)",
@@ -9785,7 +9786,7 @@
         },
         {
           "searched_rgb": "rgb(181, 206, 162)",
-          "similarity": 90.0
+          "similarity": 90
         },
         {
           "searched_rgb": "rgb(179, 151, 143)",
@@ -10425,7 +10426,7 @@
     },
     {
       "code": "2151",
-      "name": "",
+      "name": "Lime",
       "hex": "#8bd700",
       "r": 139,
       "g": 215,
@@ -11077,7 +11078,7 @@
     },
     {
       "code": "2162",
-      "name": "",
+      "name": "Old Gold",
       "hex": "#b48c0b",
       "r": 180,
       "g": 140,
@@ -11093,7 +11094,7 @@
       "site_similarity_samples": [
         {
           "searched_rgb": "rgb(255, 196, 184)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(236, 207, 225)",
@@ -13909,7 +13910,7 @@
         },
         {
           "searched_rgb": "rgb(102, 148, 154)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(115, 138, 153)",
@@ -14011,7 +14012,7 @@
     },
     {
       "code": "2196",
-      "name": "",
+      "name": "Dark Navy",
       "hex": "#002b7f",
       "r": 0,
       "g": 43,
@@ -14049,7 +14050,7 @@
     },
     {
       "code": "2198",
-      "name": "",
+      "name": "Blue",
       "hex": "#61b0dd",
       "r": 97,
       "g": 176,
@@ -14543,7 +14544,7 @@
     },
     {
       "code": "2208",
-      "name": "",
+      "name": "Violet",
       "hex": "#7452bd",
       "r": 116,
       "g": 82,
@@ -14709,7 +14710,7 @@
         },
         {
           "searched_rgb": "rgb(73, 86, 55)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(113, 71, 42)",
@@ -14845,7 +14846,7 @@
     },
     {
       "code": "2214",
-      "name": "",
+      "name": "Teal",
       "hex": "#00b3aa",
       "r": 0,
       "g": 179,
@@ -14967,7 +14968,7 @@
       "site_similarity_samples": [
         {
           "searched_rgb": "rgb(16, 127, 135)",
-          "similarity": 95.0
+          "similarity": 95
         },
         {
           "searched_rgb": "rgb(30, 130, 133)",
@@ -15695,7 +15696,7 @@
         },
         {
           "searched_rgb": "rgb(190, 190, 185)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(202, 202, 202)",
@@ -15769,7 +15770,7 @@
     },
     {
       "code": "2229",
-      "name": "",
+      "name": "Sky Blue",
       "hex": "#52c0e2",
       "r": 82,
       "g": 192,
@@ -15799,7 +15800,7 @@
     },
     {
       "code": "2231",
-      "name": "",
+      "name": "Bright Blue",
       "hex": "#00a3de",
       "r": 0,
       "g": 163,
@@ -15807,7 +15808,7 @@
     },
     {
       "code": "2232",
-      "name": "",
+      "name": "Medium Blue",
       "hex": "#0073c6",
       "r": 0,
       "g": 115,
@@ -15857,7 +15858,7 @@
         },
         {
           "searched_rgb": "rgb(236, 207, 225)",
-          "similarity": 90.0
+          "similarity": 90
         },
         {
           "searched_rgb": "rgb(243, 250, 209)",
@@ -16459,7 +16460,7 @@
     },
     {
       "code": "2241",
-      "name": "",
+      "name": "Bright Green",
       "hex": "#5bbf21",
       "r": 91,
       "g": 191,
@@ -16619,7 +16620,7 @@
     },
     {
       "code": "2246",
-      "name": "",
+      "name": "Olive",
       "hex": "#709502",
       "r": 112,
       "g": 149,
@@ -16627,7 +16628,7 @@
     },
     {
       "code": "2247",
-      "name": "",
+      "name": "Forest Green",
       "hex": "#578f15",
       "r": 87,
       "g": 143,
@@ -17047,7 +17048,7 @@
       "site_similarity_samples": [
         {
           "searched_rgb": "rgb(43, 57, 41)",
-          "similarity": 98.0
+          "similarity": 98
         },
         {
           "searched_rgb": "rgb(55, 73, 18)",
@@ -17055,7 +17056,7 @@
         },
         {
           "searched_rgb": "rgb(30, 54, 85)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(58, 82, 65)",
@@ -17391,7 +17392,7 @@
         },
         {
           "searched_rgb": "rgb(188, 134, 107)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(143, 163, 89)",
@@ -17441,7 +17442,7 @@
         },
         {
           "searched_rgb": "rgb(145, 180, 197)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(181, 206, 162)",
@@ -17599,7 +17600,7 @@
         },
         {
           "searched_rgb": "rgb(190, 190, 185)",
-          "similarity": 97.0
+          "similarity": 97
         },
         {
           "searched_rgb": "rgb(202, 202, 202)",
@@ -17733,7 +17734,7 @@
         },
         {
           "searched_rgb": "rgb(190, 190, 185)",
-          "similarity": 97.0
+          "similarity": 97
         },
         {
           "searched_rgb": "rgb(202, 202, 202)",
@@ -17911,7 +17912,7 @@
         },
         {
           "searched_rgb": "rgb(200, 198, 194)",
-          "similarity": 93.0
+          "similarity": 93
         },
         {
           "searched_rgb": "rgb(225, 224, 216)",
@@ -19079,7 +19080,7 @@
         },
         {
           "searched_rgb": "rgb(253, 229, 217)",
-          "similarity": 95.0
+          "similarity": 95
         },
         {
           "searched_rgb": "rgb(255, 211, 212)",
@@ -19161,7 +19162,7 @@
         },
         {
           "searched_rgb": "rgb(194, 209, 207)",
-          "similarity": 93.0
+          "similarity": 93
         },
         {
           "searched_rgb": "rgb(255, 231, 182)",
@@ -19213,7 +19214,7 @@
         },
         {
           "searched_rgb": "rgb(232, 232, 229)",
-          "similarity": 90.0
+          "similarity": 90
         },
         {
           "searched_rgb": "rgb(231, 249, 203)",
@@ -19737,7 +19738,7 @@
         },
         {
           "searched_rgb": "rgb(205, 182, 158)",
-          "similarity": 93.0
+          "similarity": 93
         },
         {
           "searched_rgb": "rgb(147, 139, 164)",
@@ -20043,7 +20044,7 @@
         },
         {
           "searched_rgb": "rgb(205, 182, 158)",
-          "similarity": 93.0
+          "similarity": 93
         },
         {
           "searched_rgb": "rgb(147, 139, 164)",
@@ -20607,7 +20608,7 @@
         },
         {
           "searched_rgb": "rgb(255, 201, 188)",
-          "similarity": 94.0
+          "similarity": 94
         },
         {
           "searched_rgb": "rgb(255, 177, 174)",
@@ -20689,7 +20690,7 @@
         },
         {
           "searched_rgb": "rgb(255, 190, 164)",
-          "similarity": 98.0
+          "similarity": 98
         },
         {
           "searched_rgb": "rgb(237, 172, 123)",
@@ -20939,7 +20940,7 @@
         },
         {
           "searched_rgb": "rgb(206, 175, 144)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(250, 151, 144)",
@@ -21075,7 +21076,7 @@
         },
         {
           "searched_rgb": "rgb(118, 55, 19)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(158, 67, 18)",
@@ -22105,7 +22106,7 @@
         },
         {
           "searched_rgb": "rgb(255, 199, 196)",
-          "similarity": 92.0
+          "similarity": 92
         }
       ]
     },
@@ -22315,7 +22316,7 @@
         },
         {
           "searched_rgb": "rgb(194, 209, 206)",
-          "similarity": 93.0
+          "similarity": 93
         },
         {
           "searched_rgb": "rgb(202, 226, 229)",
@@ -22611,7 +22612,7 @@
         },
         {
           "searched_rgb": "rgb(170, 213, 164)",
-          "similarity": 92.0
+          "similarity": 92
         },
         {
           "searched_rgb": "rgb(187, 179, 148)",
@@ -22747,7 +22748,7 @@
         },
         {
           "searched_rgb": "rgb(181, 206, 162)",
-          "similarity": 90.0
+          "similarity": 90
         },
         {
           "searched_rgb": "rgb(179, 151, 143)",
@@ -22877,7 +22878,7 @@
         },
         {
           "searched_rgb": "rgb(128, 167, 160)",
-          "similarity": 91.0
+          "similarity": 91
         },
         {
           "searched_rgb": "rgb(147, 139, 164)",
