@@ -1,12 +1,11 @@
 /**
- * Offline app: closest Marathon Poly thread colors (HEX/picker) via CIEDE2000 ΔE.
- * Slider sets minimum match score (derived from ΔE), same idea as "no matches below X%".
+ * Offline app: closest embroidery thread colors (HEX/picker) via CIEDE2000 / Euclidean.
+ * Supports two catalogs: Marathon Poly & Madeira Sensa Green.
  */
 import { differenceCiede2000, differenceCie76, formatRgb, formatHex, parse, converter } from "culori";
 import gsap from "gsap";
 import "./style.css";
 
-const BRAND_LABEL = "Marathon Poly";
 /** Top N matches shown immediately; extras revealed on demand. */
 const MAX_RESULTS = 5;
 const INITIAL_SHOW = 3;
@@ -39,6 +38,35 @@ const ALGORITHMS = {
   euclidean:  { label: "Euclidean RGB",   fn: euclideanRgb255,             scale: 0.2264 },
 };
 
+/** Catalog definitions */
+const CATALOGS = {
+  marathon: {
+    key:         "marathon",
+    label:       "Marathon Poly",
+    file:        "/data/marathon_poly.json",
+    defaultAlgo: "euclidean",
+    lockAlgo:    false,
+  },
+  madeira: {
+    key:         "madeira",
+    label:       "Madeira Sensa Green",
+    file:        "/data/madeira_sensa.json",
+    defaultAlgo: "ciede2000",
+    lockAlgo:    true,
+  },
+};
+
+const HINTS = {
+  euclidean: "Matches the reference site results.",
+  ciede2000: "Uses human color perception (advanced).",
+};
+
+
+// ── Module-level state ───────────────────────────────────────────────────────
+let _currentUserHex = "#3a5dff";
+let activeCatalog   = "marathon";
+
+// ── Utility ──────────────────────────────────────────────────────────────────
 function displayAccuracyPercent(distance, scale) {
   const p = 100 - Math.min(100, distance * scale);
   return Math.round(p * 100) / 100;
@@ -75,16 +103,44 @@ function normalizeHex(raw) {
   return `#${s.toLowerCase()}`;
 }
 
-async function loadCatalog() {
-  const res = await fetch("/data/marathon_poly.json");
-  if (!res.ok) throw new Error(`Failed to load catalog: ${res.status}`);
-  const data = await res.json();
-  const colors = Array.isArray(data) ? data : data.colors;
-  if (!colors || !colors.length) throw new Error("Catalog is empty or invalid.");
-  const meta = data._meta || {};
-  return { colors, meta };
+function escapeHtml(s) {
+  const d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
 }
 
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+function getRelative(event, el) {
+  const rect = el.getBoundingClientRect();
+  const cx = event.touches?.[0]?.clientX ?? event.clientX;
+  const cy = event.touches?.[0]?.clientY ?? event.clientY;
+  return {
+    x: clamp01((cx - rect.left) / rect.width),
+    y: clamp01((cy - rect.top) / rect.height),
+  };
+}
+
+// ── Catalog loading ──────────────────────────────────────────────────────────
+async function loadCatalogs() {
+  const entries = await Promise.all(
+    Object.values(CATALOGS).map(async (cat) => {
+      try {
+        const res = await fetch(cat.file);
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        const data = await res.json();
+        const colors = Array.isArray(data) ? data : data.colors;
+        if (!colors?.length) throw new Error("Empty catalog");
+        return [cat.key, { colors, meta: data._meta || {}, error: null }];
+      } catch (e) {
+        return [cat.key, { colors: [], meta: {}, error: e.message }];
+      }
+    })
+  );
+  return Object.fromEntries(entries);
+}
+
+// ── Color matching ────────────────────────────────────────────────────────────
 function matchColors(userColorParsed, catalogColors, accuracy, algorithm = "euclidean") {
   const algo = ALGORITHMS[algorithm] || ALGORITHMS.ciede2000;
   const distFn = typeof algo.fn === "function" && algo.fn.length >= 2 ? algo.fn : algo.fn();
@@ -111,7 +167,8 @@ function matchColors(userColorParsed, catalogColors, accuracy, algorithm = "eucl
   return rows.slice(0, MAX_RESULTS);
 }
 
-function renderCard(r, i) {
+// ── Card renderer ─────────────────────────────────────────────────────────────
+function renderCard(r, i, brandLabel) {
   const RANKS = ["#1", "#2", "#3", "#4", "#5"];
   return `
     <div class="thread-card">
@@ -127,7 +184,7 @@ function renderCard(r, i) {
           </span>
         </div>
         <div class="card-meta">
-          <span>${escapeHtml(BRAND_LABEL)}</span>
+          <span>${escapeHtml(brandLabel)}</span>
           <span class="card-dot"></span>
           <span class="card-code">${escapeHtml(String(r.code))}</span>
         </div>
@@ -142,9 +199,7 @@ function renderCard(r, i) {
   `;
 }
 
-// Track current user color for card rendering
-let _currentUserHex = "#3a5dff";
-
+// ── App HTML ──────────────────────────────────────────────────────────────────
 function renderApp(root, state) {
   const { error } = state;
   const INITIAL_COLOR = "#3a5dff";
@@ -157,7 +212,7 @@ function renderApp(root, state) {
           BioBlanks · Thread Tools
         </span>
         <h1>Color <em>Embroidery</em></h1>
-        <p class="subtitle">Find the closest <strong>${BRAND_LABEL}</strong> threads to your color — works offline.</p>
+        <p class="subtitle" id="subtitle">Find the closest <strong>Marathon Poly</strong> threads to your color — works offline.</p>
       </header>
 
       ${
@@ -188,11 +243,9 @@ function renderApp(root, state) {
 
           <!-- Figma-style HSV picker (hidden by default) -->
           <div class="figma-picker" id="figma-picker" aria-hidden="true">
-            <!-- HSV gradient square -->
             <div class="picker-sq" id="picker-sq" role="slider" aria-label="Color saturation and brightness">
               <div class="picker-cursor" id="picker-cursor"></div>
             </div>
-            <!-- Hue strip -->
             <div class="picker-hue-track" id="picker-hue" role="slider" aria-label="Hue">
               <div class="picker-hue-thumb" id="picker-hue-thumb"></div>
             </div>
@@ -201,6 +254,29 @@ function renderApp(root, state) {
           <div class="hex-row">
             <span class="hex-prefix">#</span>
             <input type="text" id="hex" class="hex-input" placeholder="3A5DFF" maxlength="7" value="${INITIAL_COLOR.slice(1)}" />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Thread brand selector — pill cards (distinct from segmented algo toggle) -->
+        <div class="field catalog-field">
+          <div class="field-row">
+            <span class="field-label">Thread brand</span>
+          </div>
+          <div class="brand-pills" id="cat-cards" role="group" aria-label="Select thread brand">
+            <button type="button" class="brand-pill active" data-cat="marathon" id="cat-marathon" aria-pressed="true">
+              <span class="brand-pill-inner">
+                <span class="brand-pill-dot"></span>
+                <span class="brand-pill-label">Marathon Poly</span>
+              </span>
+            </button>
+            <button type="button" class="brand-pill" data-cat="madeira" id="cat-madeira" aria-pressed="false">
+              <span class="brand-pill-inner">
+                <span class="brand-pill-dot"></span>
+                <span class="brand-pill-label">Madeira Sensa</span>
+              </span>
+            </button>
           </div>
         </div>
 
@@ -217,7 +293,7 @@ function renderApp(root, state) {
         </div>
 
         <!-- Match mode toggle -->
-        <div class="field">
+        <div class="field" id="algo-field">
           <div class="field-row">
             <span class="field-label">Match mode</span>
           </div>
@@ -256,58 +332,39 @@ function renderApp(root, state) {
   `;
 }
 
-function escapeHtml(s) {
-  const d = document.createElement("div");
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-/** Clamp value between 0 and 1 */
-function clamp01(v) { return Math.max(0, Math.min(1, v)); }
-
-/** Get pointer position relative to element, clamped 0-1 */
-function getRelative(event, el) {
-  const rect = el.getBoundingClientRect();
-  const cx = event.touches?.[0]?.clientX ?? event.clientX;
-  const cy = event.touches?.[0]?.clientY ?? event.clientY;
-  return {
-    x: clamp01((cx - rect.left) / rect.width),
-    y: clamp01((cy - rect.top) / rect.height),
-  };
-}
-
+// ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   const root = document.getElementById("app");
-  let catalog = [];
-  let meta = {};
-  let loadError = null;
 
-  try {
-    const loaded = await loadCatalog();
-    catalog = loaded.colors;
-    meta = loaded.meta;
-  } catch (e) {
-    loadError = e.message || String(e);
-  }
+  // Load both catalogs in parallel
+  const catalogData = await loadCatalogs();
+  const anyError = Object.values(catalogData).find(c => c.error && c.colors.length === 0);
+  const primaryError = catalogData.marathon?.error || null;
 
-  renderApp(root, { error: loadError });
+  renderApp(root, { error: primaryError });
 
-  const hexInput = root.querySelector("#hex");
-  const colorPreviewBg = root.querySelector("#color-preview-bg");
-  const colorPreviewWrap = root.querySelector("#color-preview-wrap");
-  const accuracy = root.querySelector("#accuracy");
-  const accVal = root.querySelector("#acc-val");
-  const runBtn = root.querySelector("#run");
-  const tbody = root.querySelector("#tbody");
-  const resultsWrap = root.querySelector("#results-wrap");
-  const sourceLine = root.querySelector("#source-line");
-  const figmaPicker = root.querySelector("#figma-picker");
-  const pickerSq = root.querySelector("#picker-sq");
-  const pickerCursor = root.querySelector("#picker-cursor");
-  const pickerHue = root.querySelector("#picker-hue");
-  const pickerHueThumb = root.querySelector("#picker-hue-thumb");
+  // ── DOM refs ─────────────────────────────────────────────────────────────
+  const hexInput          = root.querySelector("#hex");
+  const colorPreviewBg    = root.querySelector("#color-preview-bg");
+  const colorPreviewWrap  = root.querySelector("#color-preview-wrap");
+  const accuracy          = root.querySelector("#accuracy");
+  const accVal            = root.querySelector("#acc-val");
+  const runBtn            = root.querySelector("#run");
+  const tbody             = root.querySelector("#tbody");
+  const resultsWrap       = root.querySelector("#results-wrap");
+  const sourceLine        = root.querySelector("#source-line");
+  const subtitleEl        = root.querySelector("#subtitle");
+  const figmaPicker       = root.querySelector("#figma-picker");
+  const pickerSq          = root.querySelector("#picker-sq");
+  const pickerCursor      = root.querySelector("#picker-cursor");
+  const pickerHue         = root.querySelector("#picker-hue");
+  const pickerHueThumb    = root.querySelector("#picker-hue-thumb");
+  const algoHint          = root.querySelector("#algo-hint");
+  const segBtns           = root.querySelectorAll("#seg-toggle .seg-btn");
+  const segSlider         = root.querySelector("#seg-slider");
+  const catPills          = root.querySelectorAll("#cat-cards .brand-pill");
 
-  /* ── Picker state ───────────────────────────────────── */
+  // ── Picker state ──────────────────────────────────────────────────────────
   let pickerHsv = hexToHsv("#3a5dff");
   let pickerOpen = false;
 
@@ -315,20 +372,14 @@ async function init() {
     if (!pickerSq) return;
     const hue = pickerHsv.h ?? 0;
     const hsl = `hsl(${hue}, 100%, 50%)`;
-
-    // Square: white-to-hue horizontally, then overlay black-to-transparent vertically
     pickerSq.style.background = `
       linear-gradient(to bottom, transparent 0%, #000 100%),
       linear-gradient(to right, #fff 0%, ${hsl} 100%)
     `;
-
-    // Cursor position
     pickerCursor.style.left = `${(pickerHsv.s ?? 0) * 100}%`;
-    pickerCursor.style.top = `${(1 - (pickerHsv.v ?? 1)) * 100}%`;
+    pickerCursor.style.top  = `${(1 - (pickerHsv.v ?? 1)) * 100}%`;
     pickerCursor.style.background = hsvToHex(hue, pickerHsv.s ?? 0, pickerHsv.v ?? 1);
-
-    // Hue thumb position + color
-    pickerHueThumb.style.left = `${(hue / 360) * 100}%`;
+    pickerHueThumb.style.left       = `${(hue / 360) * 100}%`;
     pickerHueThumb.style.background = `hsl(${hue}, 100%, 50%)`;
   }
 
@@ -341,10 +392,9 @@ async function init() {
     updatePickerUI();
   }
 
-  // Initialize
   applyHex("#3a5dff");
 
-  /* ── Picker open/close ──────────────────────────────── */
+  // ── Picker open/close ─────────────────────────────────────────────────────
   function openPicker() {
     if (pickerOpen) return;
     pickerOpen = true;
@@ -363,10 +413,7 @@ async function init() {
     pickerOpen = false;
     colorPreviewWrap.setAttribute("aria-expanded", "false");
     gsap.to(figmaPicker, {
-      height: 0,
-      opacity: 0,
-      duration: 0.22,
-      ease: "power2.in",
+      height: 0, opacity: 0, duration: 0.22, ease: "power2.in",
       onComplete: () => {
         figmaPicker.setAttribute("hidden", "");
         figmaPicker.setAttribute("aria-hidden", "true");
@@ -374,27 +421,18 @@ async function init() {
     });
   }
 
-  colorPreviewWrap?.addEventListener("click", () => {
-    pickerOpen ? closePicker() : openPicker();
-  });
-
+  colorPreviewWrap?.addEventListener("click", () => pickerOpen ? closePicker() : openPicker());
   colorPreviewWrap?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      pickerOpen ? closePicker() : openPicker();
-    }
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickerOpen ? closePicker() : openPicker(); }
   });
-
-  // Close picker on outside click
   document.addEventListener("click", (e) => {
     if (!pickerOpen) return;
     const panel = root.querySelector(".panel");
     if (panel && !panel.contains(e.target)) closePicker();
   });
 
-  /* ── HSV Square drag ────────────────────────────────── */
+  // ── HSV Square drag ───────────────────────────────────────────────────────
   let sqDragging = false;
-
   function onSqMove(e) {
     if (!sqDragging) return;
     const { x, y } = getRelative(e, pickerSq);
@@ -406,19 +444,13 @@ async function init() {
     if (hexInput) hexInput.value = hex.slice(1).toUpperCase();
     updatePickerUI();
   }
-
-  pickerSq?.addEventListener("pointerdown", (e) => {
-    sqDragging = true;
-    pickerSq.setPointerCapture(e.pointerId);
-    onSqMove(e);
-  });
+  pickerSq?.addEventListener("pointerdown", (e) => { sqDragging = true; pickerSq.setPointerCapture(e.pointerId); onSqMove(e); });
   pickerSq?.addEventListener("pointermove", onSqMove);
   pickerSq?.addEventListener("pointerup", () => { sqDragging = false; });
   pickerSq?.addEventListener("pointercancel", () => { sqDragging = false; });
 
-  /* ── Hue strip drag ─────────────────────────────────── */
+  // ── Hue strip drag ────────────────────────────────────────────────────────
   let hueDragging = false;
-
   function onHueMove(e) {
     if (!hueDragging) return;
     const { x } = getRelative(e, pickerHue);
@@ -429,17 +461,12 @@ async function init() {
     if (hexInput) hexInput.value = hex.slice(1).toUpperCase();
     updatePickerUI();
   }
-
-  pickerHue?.addEventListener("pointerdown", (e) => {
-    hueDragging = true;
-    pickerHue.setPointerCapture(e.pointerId);
-    onHueMove(e);
-  });
+  pickerHue?.addEventListener("pointerdown", (e) => { hueDragging = true; pickerHue.setPointerCapture(e.pointerId); onHueMove(e); });
   pickerHue?.addEventListener("pointermove", onHueMove);
   pickerHue?.addEventListener("pointerup", () => { hueDragging = false; });
   pickerHue?.addEventListener("pointercancel", () => { hueDragging = false; });
 
-  /* ── Hex input sync ─────────────────────────────────── */
+  // ── Hex input sync ────────────────────────────────────────────────────────
   function syncFromHex() {
     const raw = hexInput.value.startsWith("#") ? hexInput.value : `#${hexInput.value}`;
     const h = normalizeHex(raw);
@@ -451,7 +478,6 @@ async function init() {
       updatePickerUI();
     }
   }
-
   hexInput?.addEventListener("input", () => {
     const raw = `#${hexInput.value}`;
     const h = normalizeHex(raw);
@@ -463,45 +489,29 @@ async function init() {
     }
   });
   hexInput?.addEventListener("change", syncFromHex);
-  hexInput?.addEventListener("blur", syncFromHex);
+  hexInput?.addEventListener("blur",   syncFromHex);
 
-  /* ── Accuracy slider ────────────────────────────────── */
-  if (accuracy && accVal) {
-    accuracy.addEventListener("input", () => {
-      accVal.textContent = accuracy.value;
-    });
-  }
+  // ── Accuracy slider ───────────────────────────────────────────────────────
+  accuracy?.addEventListener("input", () => { accVal.textContent = accuracy.value; });
 
-  /* ── Segmented toggle (GSAP) ────────────────────────── */
-  const segBtns = root.querySelectorAll(".seg-btn");
-  const segSlider = root.querySelector("#seg-slider");
-  const algoHint = root.querySelector("#algo-hint");
-  const HINTS = {
-    euclidean: "Matches the reference site results.",
-    ciede2000: "Uses human color perception (advanced).",
-  };
+  // ── Match mode segmented toggle ───────────────────────────────────────────
+  let algoActiveIdx = 0;
 
-  let activeIdx = 0;
-
-  function moveSlider(idx, animate = true) {
+  function moveAlgoSlider(idx, animate = true) {
     if (!segSlider) return;
-    if (animate) {
-      gsap.to(segSlider, { xPercent: idx * 100, duration: 0.4, ease: "power2.inOut" });
-    } else {
-      gsap.set(segSlider, { xPercent: idx * 100 });
-    }
+    if (animate) gsap.to(segSlider, { xPercent: idx * 100, duration: 0.4, ease: "power2.inOut" });
+    else         gsap.set(segSlider, { xPercent: idx * 100 });
   }
 
-  moveSlider(activeIdx, false);
+  moveAlgoSlider(0, false);
 
   segBtns.forEach((btn, i) => {
     btn.addEventListener("click", () => {
-      if (i === activeIdx) return;
-      const prevBtn = segBtns[activeIdx];
-      activeIdx = i;
-      prevBtn.classList.remove("active");
+      if (i === algoActiveIdx) return;
+      segBtns[algoActiveIdx].classList.remove("active");
       btn.classList.add("active");
-      moveSlider(i);
+      algoActiveIdx = i;
+      moveAlgoSlider(i);
       gsap.fromTo(btn, { scale: 0.97 }, { scale: 1, duration: 0.3, ease: "power2.out" });
       if (algoHint) {
         gsap.to(algoHint, {
@@ -515,9 +525,88 @@ async function init() {
     });
   });
 
-  /* ── Run / results ──────────────────────────────────── */
+  // ── Algo field show/hide (progressive disclosure) ────────────────────────
+  function showAlgoField() {
+    const field = root.querySelector("#algo-field");
+    if (!field) return;
+    field.removeAttribute("aria-hidden");
+    field.style.pointerEvents = "";
+    gsap.fromTo(field,
+      { height: 0, opacity: 0, overflow: "hidden" },
+      { height: "auto", opacity: 1, duration: 0.3, ease: "power2.out", clearProps: "overflow" }
+    );
+  }
+
+  function hideAlgoField() {
+    const field = root.querySelector("#algo-field");
+    if (!field) return;
+    field.style.pointerEvents = "none";
+    gsap.to(field, {
+      height: 0, opacity: 0, overflow: "hidden", duration: 0.22, ease: "power2.in",
+      onComplete: () => { field.setAttribute("aria-hidden", "true"); }
+    });
+  }
+
+  // ── Catalog selector ──────────────────────────────────────────────────────
+  function switchCatalog(key) {
+    activeCatalog = key;
+    const cfg = CATALOGS[key];
+
+    // Update subtitle
+    if (subtitleEl) {
+      subtitleEl.innerHTML = `Find the closest <strong>${escapeHtml(cfg.label)}</strong> threads to your color — works offline.`;
+    }
+
+    // Show algo field for Marathon (user has choice), hide for Madeira (no choice needed)
+    if (cfg.lockAlgo) {
+      hideAlgoField();
+    } else {
+      // Always reset to catalog default algo (euclidean for Marathon) on catalog switch
+      const defaultIdx = Array.from(segBtns).findIndex(b => b.dataset.algo === cfg.defaultAlgo);
+      const targetIdx = defaultIdx >= 0 ? defaultIdx : 0;
+      if (algoActiveIdx !== targetIdx) {
+        segBtns[algoActiveIdx]?.classList.remove("active");
+        segBtns[targetIdx]?.classList.add("active");
+        algoActiveIdx = targetIdx;
+        moveAlgoSlider(targetIdx, false);
+      }
+      if (algoHint) algoHint.textContent = HINTS[cfg.defaultAlgo] || "";
+      showAlgoField();
+    }
+
+    // Stagger-animate existing result cards if results are visible
+    if (resultsWrap && !resultsWrap.hidden) {
+      gsap.fromTo(root.querySelectorAll(".thread-card"),
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.07, ease: "power2.out" }
+      );
+    }
+  }
+
+  catPills.forEach((pill) => {
+    pill.addEventListener("click", () => {
+      if (pill.classList.contains("active")) return;
+      catPills.forEach(p => {
+        p.classList.remove("active");
+        p.setAttribute("aria-pressed", "false");
+      });
+      pill.classList.add("active");
+      pill.setAttribute("aria-pressed", "true");
+      gsap.fromTo(pill, { scale: 0.94 }, { scale: 1, duration: 0.4, ease: "back.out(1.7)" });
+      switchCatalog(pill.dataset.cat);
+    });
+  });
+
+  // ── Run / results ─────────────────────────────────────────────────────────
   runBtn?.addEventListener("click", () => {
-    if (!catalog.length) return;
+    const cfg     = CATALOGS[activeCatalog];
+    const catalog = catalogData[activeCatalog]?.colors || [];
+
+    if (!catalog.length) {
+      alert(`The ${cfg.label} catalog failed to load. Please refresh.`);
+      return;
+    }
+
     syncFromHex();
     const h = normalizeHex(`#${hexInput.value}`);
     if (!h) { alert("Invalid HEX. Use RRGGBB or #RRGGBB."); return; }
@@ -525,8 +614,13 @@ async function init() {
     if (!userParsed) { alert("Could not parse that color."); return; }
 
     _currentUserHex = h;
-    const activeBtn = root.querySelector(".seg-btn.active");
-    const algo = activeBtn ? activeBtn.dataset.algo : "euclidean";
+
+    // Determine algorithm — use catalog default if field is hidden, user choice otherwise
+    const activeAlgoBtn = root.querySelector("#seg-toggle .seg-btn.active");
+    const algo = cfg.lockAlgo
+      ? cfg.defaultAlgo
+      : (activeAlgoBtn?.dataset.algo ?? "euclidean");
+
     const rows = matchColors(userParsed, catalog, accuracy.value, algo);
 
     resultsWrap.hidden = false;
@@ -539,20 +633,26 @@ async function init() {
     }
 
     const visible = rows.slice(0, INITIAL_SHOW);
-    const extra = rows.slice(INITIAL_SHOW);
+    const extra   = rows.slice(INITIAL_SHOW);
 
     tbody.innerHTML =
-      visible.map((r, i) => renderCard(r, i)).join("") +
+      visible.map((r, i) => renderCard(r, i, cfg.label)).join("") +
       (extra.length
-        ? `<div class="extra-cards" id="extra-cards" aria-hidden="true">${extra.map((r, i) => renderCard(r, INITIAL_SHOW + i)).join("")}</div>
+        ? `<div class="extra-cards" id="extra-cards" aria-hidden="true">${extra.map((r, i) => renderCard(r, INITIAL_SHOW + i, cfg.label)).join("")}</div>
            <button type="button" class="btn-more" id="btn-more">
              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
              ${extra.length} More Option${extra.length > 1 ? "s" : ""}
            </button>`
         : "");
 
+    // GSAP stagger entrance
+    gsap.fromTo(root.querySelectorAll(".thread-card"),
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.3, stagger: 0.07, ease: "power2.out" }
+    );
+
     // Wire up "More Options" reveal
-    const btnMore = tbody.querySelector("#btn-more");
+    const btnMore   = tbody.querySelector("#btn-more");
     const extraCards = tbody.querySelector("#extra-cards");
     if (btnMore && extraCards) {
       gsap.set(extraCards, { height: 0, opacity: 0, overflow: "hidden" });
@@ -566,14 +666,14 @@ async function init() {
       });
     }
 
-    // Close picker on run
     closePicker();
   });
 
-  if (meta && Object.keys(meta).length) {
-    const { count: _omit, ...rest } = meta;
-    if (Object.keys(rest).length) console.info("[marathon-poly-matcher]", rest);
-  }
+  // Log meta info for debugging
+  Object.entries(catalogData).forEach(([key, { meta, error }]) => {
+    if (error) console.warn(`[${key}] catalog load error:`, error);
+    else if (Object.keys(meta).length) console.info(`[${key}]`, meta);
+  });
 }
 
 init();
