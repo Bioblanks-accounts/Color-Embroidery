@@ -285,7 +285,7 @@ function renderApp(root, state) {
         <!-- Accuracy slider -->
         <div class="field">
           <div class="field-row">
-            <span class="field-label">Minimum match</span>
+            <span class="field-label">Accuracy</span>
             <span class="acc-badge"><span id="acc-val">90</span>%</span>
           </div>
           <input type="range" id="accuracy" min="90" max="100" step="1" value="90" />
@@ -323,9 +323,19 @@ function renderApp(root, state) {
       <section class="panel" id="results-wrap" hidden>
         <div class="results-header">
           <h2>Results</h2>
+          <!-- Algo comparison tabs — visible only after Compare is triggered -->
+          <div class="algo-tabs" id="algo-tabs" hidden aria-hidden="true">
+            <button type="button" class="algo-tab active" id="tab-primary" data-tab="primary"></button>
+            <button type="button" class="algo-tab" id="tab-secondary" data-tab="secondary"></button>
+          </div>
         </div>
         <p class="source-line" id="source-line"></p>
         <div class="thread-cards" id="tbody"></div>
+        <!-- Compare button — visible only for Marathon with results -->
+        <button type="button" class="btn-compare" id="btn-compare" hidden aria-hidden="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+          <span id="compare-label">Compare with Perceptual</span>
+        </button>
       </section>
 
     </div>
@@ -363,6 +373,12 @@ async function init() {
   const segBtns           = root.querySelectorAll("#seg-toggle .seg-btn");
   const segSlider         = root.querySelector("#seg-slider");
   const catPills          = root.querySelectorAll("#cat-cards .brand-pill");
+  const algoTabs          = root.querySelector("#algo-tabs");
+  const btnCompare        = root.querySelector("#btn-compare");
+  const compareLabel      = root.querySelector("#compare-label");
+
+  // ── Compare state ─────────────────────────────────────────────────────────
+  let compareStore = null; // { primary: {algo,rows}, secondary: {algo,rows}, activeTab: 'primary' }
 
   // ── Picker state ──────────────────────────────────────────────────────────
   let pickerHsv = hexToHsv("#3a5dff");
@@ -492,7 +508,17 @@ async function init() {
   hexInput?.addEventListener("blur",   syncFromHex);
 
   // ── Accuracy slider ───────────────────────────────────────────────────────
-  accuracy?.addEventListener("input", () => { accVal.textContent = accuracy.value; });
+  function updateSliderFill() {
+    const min = Number(accuracy.min) || 90;
+    const max = Number(accuracy.max) || 100;
+    const pct = ((Number(accuracy.value) - min) / (max - min)) * 100;
+    accuracy.style.setProperty("--fill", `${pct}%`);
+  }
+  updateSliderFill(); // set on init
+  accuracy?.addEventListener("input", () => {
+    accVal.textContent = accuracy.value;
+    updateSliderFill();
+  });
 
   // ── Match mode segmented toggle ───────────────────────────────────────────
   let algoActiveIdx = 0;
@@ -574,12 +600,16 @@ async function init() {
       showAlgoField();
     }
 
-    // Stagger-animate existing result cards if results are visible
+    // Clear previous results — switching brand means a new search is needed
     if (resultsWrap && !resultsWrap.hidden) {
-      gsap.fromTo(root.querySelectorAll(".thread-card"),
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.3, stagger: 0.07, ease: "power2.out" }
-      );
+      gsap.to(resultsWrap, {
+        opacity: 0, y: -8, duration: 0.18, ease: "power2.in",
+        onComplete: () => {
+          resultsWrap.hidden = true;
+          tbody.innerHTML = "";
+          gsap.set(resultsWrap, { opacity: 1, y: 0 });
+        }
+      });
     }
   }
 
@@ -595,6 +625,123 @@ async function init() {
       gsap.fromTo(pill, { scale: 0.94 }, { scale: 1, duration: 0.4, ease: "back.out(1.7)" });
       switchCatalog(pill.dataset.cat);
     });
+  });
+
+  // ── Render result cards into tbody ───────────────────────────────────────
+  function renderRows(rows, brandLabel, animate = true) {
+    const visible = rows.slice(0, INITIAL_SHOW);
+    const extra   = rows.slice(INITIAL_SHOW);
+
+    tbody.innerHTML =
+      visible.map((r, i) => renderCard(r, i, brandLabel)).join("") +
+      (extra.length
+        ? `<div class="extra-cards" id="extra-cards" aria-hidden="true">${extra.map((r, i) => renderCard(r, INITIAL_SHOW + i, brandLabel)).join("")}</div>
+           <button type="button" class="btn-more" id="btn-more">
+             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+             ${extra.length} More Option${extra.length > 1 ? "s" : ""}
+           </button>`
+        : "");
+
+    if (animate) {
+      gsap.fromTo(root.querySelectorAll(".thread-card"),
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.07, ease: "power2.out" }
+      );
+    }
+
+    const btnMore    = tbody.querySelector("#btn-more");
+    const extraCards = tbody.querySelector("#extra-cards");
+    if (btnMore && extraCards) {
+      gsap.set(extraCards, { height: 0, opacity: 0, overflow: "hidden" });
+      btnMore.addEventListener("click", () => {
+        extraCards.removeAttribute("aria-hidden");
+        gsap.to(extraCards, { height: "auto", opacity: 1, duration: 0.35, ease: "power2.out", clearProps: "overflow" });
+        gsap.to(btnMore, { autoAlpha: 0, y: 6, duration: 0.2, ease: "power2.in", onComplete: () => btnMore.remove() });
+      });
+    }
+  }
+
+  // ── Show/hide compare UI ──────────────────────────────────────────────────
+  function resetCompareUI() {
+    compareStore = null;
+    if (algoTabs) { algoTabs.hidden = true; algoTabs.setAttribute("aria-hidden", "true"); }
+    if (btnCompare) { btnCompare.hidden = true; btnCompare.setAttribute("aria-hidden", "true"); }
+    root.querySelectorAll(".algo-tab").forEach(t => t.classList.remove("active"));
+  }
+
+  function showCompareButton(algo, cfg) {
+    if (!btnCompare || cfg.lockAlgo) return;
+    const otherLabel = algo === "euclidean" ? "Perceptual" : "Standard";
+    if (compareLabel) compareLabel.textContent = `Compare with ${otherLabel}`;
+    btnCompare.hidden = false;
+    btnCompare.setAttribute("aria-hidden", "false");
+    gsap.fromTo(btnCompare,
+      { opacity: 0, y: 6 },
+      { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" }
+    );
+  }
+
+  function activateAlgoTab(tab) {
+    if (!compareStore) return;
+    const data = compareStore[tab];
+    compareStore.activeTab = tab;
+
+    root.querySelectorAll(".algo-tab").forEach(t => t.classList.remove("active"));
+    root.querySelector(`#tab-${tab}`)?.classList.add("active");
+
+    gsap.to(tbody, {
+      opacity: 0, y: -6, duration: 0.15, ease: "power2.in",
+      onComplete: () => {
+        renderRows(data.rows, CATALOGS[activeCatalog].label, false);
+        gsap.fromTo(tbody,
+          { opacity: 0, y: 6 },
+          { opacity: 1, y: 0, duration: 0.22, ease: "power2.out" }
+        );
+      }
+    });
+  }
+
+  // Wire algo-tab clicks
+  root.querySelectorAll(".algo-tab").forEach(tab => {
+    tab.addEventListener("click", () => activateAlgoTab(tab.dataset.tab));
+  });
+
+  // Wire compare button
+  btnCompare?.addEventListener("click", () => {
+    if (!compareStore) return;
+    const cfg     = CATALOGS[activeCatalog];
+    const catalog = catalogData[activeCatalog]?.colors || [];
+    const otherAlgo = compareStore.primary.algo === "euclidean" ? "ciede2000" : "euclidean";
+    const rows = matchColors(parse(_currentUserHex), catalog, accuracy.value, otherAlgo);
+
+    compareStore.secondary = { algo: otherAlgo, rows };
+    compareStore.activeTab = "primary";
+
+    // Label the tabs
+    const algoNames = { euclidean: "Standard", ciede2000: "Perceptual" };
+    const tabPrimary   = root.querySelector("#tab-primary");
+    const tabSecondary = root.querySelector("#tab-secondary");
+    if (tabPrimary)   tabPrimary.textContent   = algoNames[compareStore.primary.algo];
+    if (tabSecondary) tabSecondary.textContent  = algoNames[otherAlgo];
+
+    // Show tabs, hide compare button
+    gsap.to(btnCompare, {
+      opacity: 0, y: 4, duration: 0.18, ease: "power2.in",
+      onComplete: () => { btnCompare.hidden = true; }
+    });
+
+    if (algoTabs) {
+      algoTabs.hidden = false;
+      algoTabs.setAttribute("aria-hidden", "false");
+      gsap.fromTo(algoTabs,
+        { opacity: 0, y: -6 },
+        { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" }
+      );
+    }
+
+    // Activate primary tab (already rendered)
+    root.querySelector("#tab-primary")?.classList.add("active");
+    root.querySelector("#tab-secondary")?.classList.remove("active");
   });
 
   // ── Run / results ─────────────────────────────────────────────────────────
@@ -615,13 +762,15 @@ async function init() {
 
     _currentUserHex = h;
 
-    // Determine algorithm — use catalog default if field is hidden, user choice otherwise
     const activeAlgoBtn = root.querySelector("#seg-toggle .seg-btn.active");
     const algo = cfg.lockAlgo
       ? cfg.defaultAlgo
       : (activeAlgoBtn?.dataset.algo ?? "euclidean");
 
     const rows = matchColors(userParsed, catalog, accuracy.value, algo);
+
+    // Reset compare state on every new search
+    resetCompareUI();
 
     resultsWrap.hidden = false;
     const rgbStr = formatRgb(userParsed);
@@ -632,38 +781,12 @@ async function init() {
       return;
     }
 
-    const visible = rows.slice(0, INITIAL_SHOW);
-    const extra   = rows.slice(INITIAL_SHOW);
+    renderRows(rows, cfg.label);
 
-    tbody.innerHTML =
-      visible.map((r, i) => renderCard(r, i, cfg.label)).join("") +
-      (extra.length
-        ? `<div class="extra-cards" id="extra-cards" aria-hidden="true">${extra.map((r, i) => renderCard(r, INITIAL_SHOW + i, cfg.label)).join("")}</div>
-           <button type="button" class="btn-more" id="btn-more">
-             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-             ${extra.length} More Option${extra.length > 1 ? "s" : ""}
-           </button>`
-        : "");
-
-    // GSAP stagger entrance
-    gsap.fromTo(root.querySelectorAll(".thread-card"),
-      { opacity: 0, y: 12 },
-      { opacity: 1, y: 0, duration: 0.3, stagger: 0.07, ease: "power2.out" }
-    );
-
-    // Wire up "More Options" reveal
-    const btnMore   = tbody.querySelector("#btn-more");
-    const extraCards = tbody.querySelector("#extra-cards");
-    if (btnMore && extraCards) {
-      gsap.set(extraCards, { height: 0, opacity: 0, overflow: "hidden" });
-      btnMore.addEventListener("click", () => {
-        extraCards.removeAttribute("aria-hidden");
-        gsap.to(extraCards, { height: "auto", opacity: 1, duration: 0.35, ease: "power2.out", clearProps: "overflow" });
-        gsap.to(btnMore, {
-          autoAlpha: 0, y: 6, duration: 0.2, ease: "power2.in",
-          onComplete: () => btnMore.remove()
-        });
-      });
+    // Store primary and offer compare (Marathon only)
+    if (!cfg.lockAlgo) {
+      compareStore = { primary: { algo, rows }, secondary: null, activeTab: "primary" };
+      showCompareButton(algo, cfg);
     }
 
     closePicker();
