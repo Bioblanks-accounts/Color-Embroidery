@@ -173,6 +173,7 @@ function renderCard(r, i, brandLabel) {
   return `
     <div class="thread-card">
       <div class="card-swatch" style="background:${r.hex}">
+        <span class="swatch-score${r.scoreSource === "site" ? " site" : ""}">${r.accuracyPct}%</span>
         <span class="card-rank">${RANKS[i] || `#${i + 1}`}</span>
       </div>
       <div class="card-content">
@@ -211,14 +212,16 @@ function renderApp(root, state) {
           <span class="eyebrow-dot"></span>
           BioBlanks · Thread Tools
         </span>
-        <h1>Color <em>Embroidery</em></h1>
-        <p class="subtitle" id="subtitle">Find the closest <strong>Marathon Poly</strong> threads to your color — works offline.</p>
+        <h1>Embroidery <em>thread matcher</em></h1>
+        <p class="subtitle">Find the closest embroidery thread match for your color — works offline.</p>
       </header>
 
+      <div class="main-row">
+      <div class="input-col">
       ${
         error
           ? `<div class="banner error"><span class="banner-dot"></span>${escapeHtml(error)}</div>`
-          : `<div class="banner ok"><span class="banner-dot"></span>Catalog loaded · ready</div>`
+          : ``
       }
 
       <section class="panel">
@@ -314,11 +317,12 @@ function renderApp(root, state) {
         <!-- CTA -->
         <button type="button" class="btn" id="run">
           Find Matches
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
+          <svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12.0754 6.35112C9.41934 6.13537 7.3134 3.89397 7.109 1.06961C7.05464 0.31013 5.94242 0.31013 5.88915 1.06961C5.68475 3.89397 3.57881 6.13537 0.923825 6.35112C0.12907 6.4154 0.12907 7.58459 0.923825 7.64888C3.57881 7.86463 5.68584 10.106 5.88915 12.9304C5.94351 13.6899 7.05573 13.6899 7.109 12.9304C7.3134 10.106 9.41934 7.86463 12.0754 7.64888C12.8713 7.58459 12.8713 6.4154 12.0754 6.35112Z" fill="currentColor"/>
           </svg>
         </button>
       </section>
+      </div>
 
       <section class="panel" id="results-wrap" hidden>
         <div class="results-header">
@@ -329,7 +333,6 @@ function renderApp(root, state) {
             <button type="button" class="algo-tab" id="tab-secondary" data-tab="secondary"></button>
           </div>
         </div>
-        <p class="source-line" id="source-line"></p>
         <div class="thread-cards" id="tbody"></div>
         <!-- Compare button — visible only for Marathon with results -->
         <button type="button" class="btn-compare" id="btn-compare" hidden aria-hidden="true">
@@ -337,6 +340,7 @@ function renderApp(root, state) {
           <span id="compare-label">Compare with Perceptual</span>
         </button>
       </section>
+      </div>
 
     </div>
   `;
@@ -578,8 +582,8 @@ async function init() {
     activeCatalog = key;
     const cfg = CATALOGS[key];
 
-    // Update subtitle
-    if (subtitleEl) {
+    // Subtitle is now generic — no dynamic update needed
+    if (false && subtitleEl) {
       subtitleEl.innerHTML = `Find the closest <strong>${escapeHtml(cfg.label)}</strong> threads to your color — works offline.`;
     }
 
@@ -772,12 +776,44 @@ async function init() {
     // Reset compare state on every new search
     resetCompareUI();
 
+    // Reveal animation: input stays anchored at center — only the results
+    // panel slides/fades in from the right on desktop. On mobile or when
+    // results is already visible, skip the slide-in.
+    const isDesktopRow = window.matchMedia("(min-width: 960px)").matches;
+    const wasHidden = resultsWrap.hidden;
     resultsWrap.hidden = false;
+
+    if (wasHidden && isDesktopRow) {
+      // Slide out from behind the input panel (negative x = starts to the left,
+      // behind the input) and glides into its natural position to the right.
+      // Input's z-index is higher so the first frames look like it's emerging
+      // from behind the panel.
+      gsap.fromTo(resultsWrap,
+        { opacity: 0, x: -120 },
+        { opacity: 1, x: 0, duration: 0.65, ease: "power3.out", clearProps: "transform,opacity" }
+      );
+    }
     const rgbStr = formatRgb(userParsed);
-    sourceLine.innerHTML = `Converted from: <strong>Color Picker</strong> · Color Code: <strong>N/A</strong> · RGB: <strong>${rgbStr}</strong>`;
 
     if (!rows.length) {
-      tbody.innerHTML = `<div class="empty-state">No thread at least <strong>${escapeHtml(accuracy.value)}%</strong> match. Lower the minimum match slider to include more distant suggestions.</div>`;
+      // No results met the threshold — get the closest alternatives (no floor)
+      const fallback = matchColors(userParsed, catalog, 0, algo);
+
+      if (!fallback.length) {
+        tbody.innerHTML = `<div class="empty-state">No threads found in this catalog.</div>`;
+        return;
+      }
+
+      // Render closest cards first (preserves GSAP stagger inside renderRows)
+      renderRows(fallback, cfg.label);
+
+      // Then prepend notice above the cards
+      tbody.insertAdjacentHTML("afterbegin", `
+        <div class="no-match-notice">
+          Nenhum resultado com <strong>${escapeHtml(accuracy.value)}%</strong> de correspondência —
+          aqui estão as opções mais próximas disponíveis.
+        </div>
+      `);
       return;
     }
 

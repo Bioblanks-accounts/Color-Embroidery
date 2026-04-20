@@ -154,17 +154,20 @@ body {
 .header {
   margin-bottom: var(--s7);
   padding-top: var(--s2);
+  text-align: center;
 }
 
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--n-500);
+  /* Figma spec: Aeonik Medium 15/20, letter-spacing 0, fill #1A1A1A */
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #1A1A1A;
   margin-bottom: var(--s3);
 }
 
@@ -191,6 +194,7 @@ body {
   line-height: 1.02;
   margin-bottom: var(--s3);
   color: var(--n-700);
+  text-transform: capitalize;
 }
 
 .header h1 em {
@@ -203,6 +207,8 @@ body {
   color: var(--text-2);
   line-height: 1.6;
   max-width: 42ch;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .subtitle strong {
@@ -283,7 +289,7 @@ body {
 .color-preview-wrap {
   position: relative;
   width: 100%;
-  height: 120px;
+  height: 88px;
   border-radius: var(--r-md);
   overflow: hidden;
   cursor: pointer;
@@ -315,7 +321,7 @@ body {
 
 .color-preview-label {
   position: absolute;
-  bottom: var(--s3);
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -356,7 +362,7 @@ body {
 .picker-sq {
   position: relative;
   width: 100%;
-  padding-bottom: 56%;
+  padding-bottom: 46%;
   border-radius: 8px;
   overflow: hidden;
   cursor: crosshair;
@@ -388,7 +394,7 @@ body {
 /* Hue rainbow strip */
 .picker-hue-track {
   position: relative;
-  height: 12px;
+  height: 10px;
   border-radius: var(--r-pill);
   background: linear-gradient(to right,
     hsl(0,100%,50%), hsl(30,100%,50%), hsl(60,100%,50%),
@@ -767,10 +773,21 @@ input[type="range"]::-moz-range-thumb {
 
 .btn svg { flex-shrink: 0; }
 
+/* Vortex icon spin on hover — only the sparkle rotates, nothing else changes */
+#run svg {
+  transition: transform 1.2s cubic-bezier(.32, .72, 0, 1);
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #run:hover svg {
+    transform: rotate(360deg) translateZ(0);
+  }
+}
+
 .btn:hover {
   background: var(--g-400);
   box-shadow: var(--btn-shadow-hover);
-  transform: translateY(-1px);
 }
 
 .btn:active {
@@ -993,6 +1010,24 @@ input[type="range"]::-moz-range-thumb {
 
 .empty-state strong { color: var(--text-2); }
 
+/* Notice shown above fallback cards when no result meets the threshold */
+.no-match-notice {
+  padding: var(--s3) var(--s4);
+  margin-bottom: var(--s3);
+  border-radius: var(--r-md);
+  background: rgba(255, 176, 102, 0.10);
+  border: 1px solid rgba(255, 176, 102, 0.28);
+  color: var(--n-600);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  grid-column: 1 / -1; /* spans all grid columns if thread-cards is a grid */
+}
+
+.no-match-notice strong {
+  color: var(--n-700);
+  font-weight: 600;
+}
+
 /* ── Hidden attribute guard ─────────────────────────── */
 /* Prevent display:flex/grid from overriding [hidden] */
 .algo-tabs[hidden],
@@ -1094,6 +1129,138 @@ input[type="range"]::-moz-range-thumb {
 .btn-compare:active {
   background: rgba(0, 0, 0, 0.04);
   transform: scale(0.99);
+}
+
+/* Hide the swatch-score pill by default — only shown on portrait desktop cards */
+.swatch-score { display: none; }
+
+/* ── Desktop: input column left, results flowing right ───── */
+@media (min-width: 960px) {
+  /* Shell: wider on desktop, still block-level centered by margin:auto.
+     Inside, a flex row lets input stand centered alone, or sit beside results. */
+  .shell {
+    max-width: min(1340px, calc(100vw - var(--s6) * 2));
+  }
+
+  /* Main row: 3-column grid with input always centered in column 2.
+     Columns 1 and 3 are equal fr spacers, so input stays dead-center in
+     the shell regardless of whether results is visible. Results sits in
+     column 3 (to the right of input) when shown. */
+  .main-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 460px minmax(0, 1fr);
+    column-gap: var(--s5);
+    align-items: stretch;
+  }
+
+  /* Input sits above results in z-order — results slides out from behind it */
+  .input-col {
+    grid-column: 2;
+    width: 460px;
+    min-width: 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Results: top-aligned with input, behind input in z-order */
+  #results-wrap {
+    grid-column: 3;
+    justify-self: stretch;
+    min-width: 0;
+    align-self: start;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Cards in a fluid responsive grid — compact floor so 2+ cards fit
+     even in the narrower results column (input stays centered, so results
+     is bounded by the right half of the viewport minus the centering spacer). */
+  .thread-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: var(--s2);
+  }
+
+  /* Portrait orientation inside the grid — swatch on top, content below,
+     gives full card width to the name so it doesn't truncate */
+  .thread-card {
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .card-swatch {
+    width: 100%;
+    min-height: 72px;
+    height: 72px;
+    position: relative;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 7px;
+  }
+
+  /* Rank badge (#1/#2/#3) hidden — the percent itself communicates ranking */
+  .thread-card .card-rank {
+    display: none;
+  }
+
+  /* Percent shown inside the swatch, top-left, bold white (Pantone-style) */
+  .swatch-score {
+    display: inline-flex;
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.98);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.32);
+  }
+
+  /* Inline score next to name is now redundant — hide on desktop grid */
+  .thread-card .card-top .score-badge {
+    display: none;
+  }
+
+  .card-content {
+    padding: 10px;
+    gap: 4px;
+    justify-content: flex-start;
+  }
+
+  /* Let name wrap or ellipsize within full card width — score badge on the right */
+  .card-top {
+    align-items: center;
+  }
+
+  .card-name {
+    font-size: 0.8125rem;
+  }
+
+  .card-meta {
+    font-size: 0.6875rem;
+  }
+
+  .card-compare .sw-sm {
+    width: 18px;
+    height: 11px;
+  }
+
+  .card-compare .sw-vs,
+  .card-compare .hex-code {
+    font-size: 0.625rem;
+  }
+
+  /* Keep all cards visible (no progressive reveal) — grid absorbs them naturally */
+  .extra-cards {
+    display: contents !important;
+  }
+  .btn-more {
+    display: none !important;
+  }
 }
 
 /* ── Responsive ─────────────────────────────────────── */
