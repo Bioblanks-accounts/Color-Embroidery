@@ -810,8 +810,8 @@ async function init() {
       // Then prepend notice above the cards
       tbody.insertAdjacentHTML("afterbegin", `
         <div class="no-match-notice">
-          Nenhum resultado com <strong>${escapeHtml(accuracy.value)}%</strong> de correspondência —
-          aqui estão as opções mais próximas disponíveis.
+          No thread reached <strong>${escapeHtml(accuracy.value)}%</strong> accuracy —
+          showing the closest available options.
         </div>
       `);
       return;
